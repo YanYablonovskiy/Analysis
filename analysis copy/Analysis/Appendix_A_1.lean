@@ -287,9 +287,15 @@ def Exercise_A_1_5 : Decidable (∀ (X Y Z: Prop), (X ↔ Y) → (Y ↔ Z) → [
   simp [hXiY,hYiZ]
 
 
+def Exercise_A_1_5' : Decidable (∀ (X Y Z: Prop), (X ↔ Y) → (Y ↔ Z) → [X,Y,Z].TFAE) := by
+ apply isTrue; intros; simp_all
 
 
 /-- Exercise A.1.6. -/
 def Exercise_A_1_6 : Decidable (∀ (X Y Z: Prop), (X → Y) → (Y → Z) → (Z → X) → [X,Y,Z].TFAE) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isTrue
+  intro X Y Z hxY hyZ hzX
+  have hXiY: X ↔ Y := ⟨hxY, fun hy ↦ hzX (hyZ hy)⟩
+  have hYiZ: Y ↔ Z := ⟨hyZ, fun hz ↦ hxY (hzX hz)⟩
+  simp [hXiY,hYiZ]
