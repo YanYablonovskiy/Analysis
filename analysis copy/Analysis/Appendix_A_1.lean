@@ -16,13 +16,31 @@ An introduction to mathematical statements.  Showcases some basic tactics and Le
 /-- Every well-formed statement is either true or false... -/
 example (P:Prop) : (P=true) ∨ (P=false) := by simp; tauto
 
+--This uses axiom of choice, not clearly stated. This is not true by default.
+--Essentially every Prop type is the Unit type or Empty type.
+
+example (P:Prop) : (P=true) ∨ (P=false) := by simp; exact Classical.em P
+
 /-- .. but not both. -/
 example (P:Prop) : ¬ ((P=true) ∧ (P=false)) := by simp
+
+#check false_ne_true
+
+--couldnt get it out of the P = .. for a term proof TODO
+example (P:Prop) : ¬ ((P=true) ∧ (P=false)) := fun hpnp ↦ false_ne_true sorry
+
+
 
 -- Note: `P=true` and `P=false` simplify to `P` and `¬P` respectively.
 
 /-- To prove that a statement is true, it suffices to show that it is not false, -/
 example {P:Prop} (h: P ≠ false) : P = true := by simp; tauto
+
+
+--also seems hard with just terms:
+
+
+
 
 /-- while to show that a statement is false, it suffices to show that it is not true. -/
 example {P:Prop} (h: P ≠ true) : P = false := by simp; tauto
@@ -33,6 +51,12 @@ example : 2 = 2 := rfl
 /-- This statement is also true, but not very efficient. -/
 example : 4 ≤ 4 := by norm_num
 
+
+--doable with terms
+example : 4 ≤ 4 := le_refl 4
+
+
+
 /- This is an expression, not a statement. -/
 #check 2 + 3*5
 
@@ -42,6 +66,13 @@ example : 4 ≤ 4 := by norm_num
 #check Prime (30+5)
 
 #check 30+5 ≤ 42-7
+#reduce 2 + 3*5
+
+#eval 2 + 3*5
+
+#reduce 30+5 ≤ 42-7 --doesnt return true
+
+#eval 30+5 ≤ 42-7 --returns true
 
 /-- Conjunction -/
 example {X Y: Prop} (hX: X) (hY: Y) : X ∧ Y := by
@@ -191,25 +222,72 @@ example {X Y Z:Prop} (h: [X,Y,Z].TFAE) : X ↔ Y := by
   exact h.out 0 1
 
 /-- Exercise A.1.1.  Fill in the first `sorry` with something reasonable. -/
-example {X Y:Prop} : ¬ ((X ∨ Y) ∧ ¬ (X ∧ Y)) ↔ sorry := by sorry
+example {X Y:Prop} : ¬ ((X ∨ Y) ∧ ¬ (X ∧ Y)) ↔ ¬(X ∨ Y) ∨ (X ∧ Y) := by
+ constructor
+ · intro h
+   push_neg at h
+   by_cases hc: X ∨ Y
+   · exact Or.inr (h hc)
+   · exact Or.inl hc
+ · intro h
+   push_neg
+   cases h
+   · expose_names
+     intro hc
+     exact (h hc).elim
+   · intros;assumption
+
 
 /-- Exercise A.1.2.  Fill in the first `sorry` with something reasonable. -/
-example {X Y:Prop} : ¬ (X ↔ Y) ↔ sorry := by sorry
+example {X Y:Prop} : ¬ (X ↔ Y) ↔ ¬(X → Y) ∨ ¬(Y → X) := by
+ constructor
+ · intro hnif
+   by_contra!
+   exact hnif ⟨this.1,this.2⟩
+ · intro hor
+   apply hor.elim
+   · intro hxy hif
+     exact hxy hif.mp
+   · intro hyx hif
+     exact hyx hif.mpr
+
+#check Decidable
+
+#print Decidable
+
+
+
 
 /-- Exercise A.1.3. -/
 def Exercise_A_1_3 : Decidable (∀ (X Y: Prop), (X → Y) → (¬X → ¬ Y) → (X ↔ Y)) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`, depending on whether you believe the given statement to be true or false.
-  sorry
+  apply isTrue
+  intro X Y hxy hyx
+  have: (¬X → ¬Y) → (Y → X) := by tauto
+  exact ⟨hxy,this hyx⟩
 
 /-- Exercise A.1.4. -/
 def Exercise_A_1_4 : Decidable (∀ (X Y: Prop), (X → Y) → (¬Y → ¬ X) → (X ↔ Y)) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isFalse
+  intro h
+  specialize h false true
+  tauto
+
+
+
+
+
 
 /-- Exercise A.1.5. -/
 def Exercise_A_1_5 : Decidable (∀ (X Y Z: Prop), (X ↔ Y) → (Y ↔ Z) → [X,Y,Z].TFAE) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isTrue
+  intro X Y Z hXiY hYiZ
+  simp [hXiY,hYiZ]
+
+
+
 
 /-- Exercise A.1.6. -/
 def Exercise_A_1_6 : Decidable (∀ (X Y Z: Prop), (X → Y) → (Y → Z) → (Z → X) → [X,Y,Z].TFAE) := by
