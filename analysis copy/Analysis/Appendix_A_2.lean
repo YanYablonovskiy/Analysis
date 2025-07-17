@@ -9,9 +9,27 @@ An introduction to implications.  Showcases some basic tactics and Lean syntax.
 
 example {X Y: Prop} (hX: X) : (X → Y) ↔ Y := by tauto
 
+
+--term proof for 0 low readability
+example {X Y: Prop} (hX: X) : (X → Y) ↔ Y :=
+ ⟨fun hxy ↦ hxy hX,fun hY ↦ (fun _ ↦ hY)⟩
+
+
+
+
+
 example {X Y: Prop} (hX: ¬X) : X → Y := by
   intro hX'
   contradiction
+
+--term proof
+example {X Y: Prop} (hX: ¬X) : X → Y := fun hx ↦ (hX hx).elim
+
+
+example {X Y: Prop} (hXY: X → Y) (hX: X) : Y := by
+  exact hXY hX
+
+
 
 example {X Y: Prop} (hXY: X → Y) (hX: X) : Y := by
   exact hXY hX
@@ -23,10 +41,20 @@ example {X Y: Prop} (hXY: X → Y) (hY: ¬ Y) : ¬ X := by
   exact hXY hY
 
 
+example {X Y: Prop} (hXY: X → Y) (hY: ¬ Y) : ¬ X := by
+  contrapose! hY
+  exact hXY hY
+
+--term proof
+example {X Y: Prop} (hXY: X → Y) (hY: ¬ Y) : ¬ X := fun hX ↦ (hY (hXY hX))
+
+
 theorem example_A_2_1 (x:ℤ) : x = 2 → x^2 = 4 := by
   intro h
   rw [h]
   rfl
+--definitional eq?
+
 
 example : (2:ℤ) = 2 → (2:ℤ)^2 = 4 := example_A_2_1 2
 
@@ -139,4 +167,3 @@ example {x:ℝ} (h:x>0) (hsin: Real.sin x = 1) : x ≥ Real.pi / 2 := by
     linarith
   simp at h1 h2
   linarith
-
