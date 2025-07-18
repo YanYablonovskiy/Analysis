@@ -97,11 +97,39 @@ example : ¬ ∃ m:ℤ, ∀ n:ℤ, m > n := by
 /-- Exercise A.5.1 -/
 def Exercise_A_5_1a : Decidable (∀ x > (0:ℝ), ∀ y > (0:ℝ), y^2 = x ) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isFalse
+  intro hc
+  specialize hc 1 (by linarith) 2 (by linarith)
+  linarith
+
+
+#check Real.self_lt_rpow_of_one_lt
 
 def Exercise_A_5_1b : Decidable (∃ x > (0:ℝ), ∀ y > (0:ℝ), y^2 = x ) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isFalse
+  intro hc
+  obtain ⟨x,hx0,hx⟩ := hc
+  specialize hx (x+1) (by linarith)
+  have heq1: (2:ℕ) = (2:ℝ) := by
+   simp
+  have hle0: 1 < (x+1) := by linarith
+  have hle1: (x+1) > x := by linarith
+  have hle2: (x+1) < (x+1)^2 := by
+   convert Real.self_lt_rpow_of_one_lt (x:=x+1) (y:= (2:ℕ))
+   constructor
+   · intro h1 h2 h3
+     linarith
+   · intro h
+     specialize h hle0 (by linarith)
+     convert h
+     simp
+  linarith
+
+
+
+
+
 
 def Exercise_A_5_1c : Decidable (∃ x > (0:ℝ), ∃ y > (0:ℝ), y^2 = x ) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
