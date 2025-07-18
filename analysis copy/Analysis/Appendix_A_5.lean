@@ -128,17 +128,36 @@ def Exercise_A_5_1b : Decidable (∃ x > (0:ℝ), ∀ y > (0:ℝ), y^2 = x ) := 
 
 
 
-
+#check pow_two_pos_of_ne_zero
 
 
 def Exercise_A_5_1c : Decidable (∃ x > (0:ℝ), ∃ y > (0:ℝ), y^2 = x ) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isTrue
+  use 1
+  constructor
+  · linarith
+  · use 1
+    simp
 
 def Exercise_A_5_1d : Decidable (∀ y > (0:ℝ), ∃ x > (0:ℝ), y^2 = x ) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isTrue
+  intro y hy
+  use (y^2)
+  constructor
+  · apply pow_two_pos_of_ne_zero; linarith
+  · rfl
+
+
+#check  Real.rpow_le_self_of_le_one
 
 def Exercise_A_5_1e : Decidable (∃ y > (0:ℝ), ∀ x > (0:ℝ), y^2 = x ) := by
   -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isFalse
+  intro hc
+  obtain ⟨x,hx0,hx⟩ := hc
+  specialize hx ((x+1)^2) (by rw [pow_two];field_simp;linarith)
+  have hle2: x^2 < (x+1)^2 := by
+    linarith
+  linarith
