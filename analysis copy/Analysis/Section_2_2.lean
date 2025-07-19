@@ -99,7 +99,12 @@ theorem Nat.add_comm (n m:Nat) : n + m = m + n := by
 /-- Proposition 2.2.5 (Addition is associative) / Exercise 2.2.1
     Compare with Mathlib's `Nat.add_assoc` -/
 theorem Nat.add_assoc (a b c:Nat) : (a + b) + c = a + (b + c) := by
-  sorry
+  revert c
+  apply induction (fun c:Nat ↦ (a + b) + c = a + (b + c))
+  · simp
+  · intro n ih
+    simp [Nat.add_succ, ih]
+
 
 /-- Proposition 2.2.6 (Cancellation law)
     Compare with Mathlib's `Nat.add_left_cancel` -/
@@ -168,9 +173,29 @@ extracts a witness `x` and a proof `hx : P x` of the property from a hypothesis 
 #check ExistsUnique.exists
 #check ExistsUnique.unique
 
+
+def Nat.exists_succ_eq: (n:Nat) → (n.isPos) → (∃ b, b++ = n)
+  | 0, h => by
+    rw [isPos] at h
+    exfalso
+    exact h (Eq.refl 0)
+  | 1, h => by
+    use 0; rfl
+  | (succ (succ m)), _ => by
+    use m++
+
+
+
+
 /-- Lemma 2.2.10 (unique predecessor) / Exercise 2.2.2 -/
 lemma Nat.uniq_succ_eq (a:Nat) (ha: a.isPos) : ∃! b, b++ = a := by
-  sorry
+   apply existsUnique_of_exists_of_unique
+   · exact exists_succ_eq a ha
+   · intro m n hm hn
+     rw [←hn] at hm
+     rw [Nat.succ_cancel hm]
+
+
 
 /-- Definition 2.2.11 (Ordering of the natural numbers)
     This defines the `≤` operation on the natural numbers. -/
