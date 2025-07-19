@@ -204,21 +204,27 @@ theorem Sequence.IsCauchy.mul {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb
   sorry
 
 /-- Proposition 5.3.10 (Product of equivalent sequences is equivalent) / Exercise 5.3.2 -/
-theorem Sequence.mul_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Equiv a a') :
+theorem Sequence.mul_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (hb : (b:Sequence).IsCauchy) (haa': Equiv a a') :
   Equiv (a * b) (a' * b) := by
   sorry
 
 /--Proposition 5.3.10 (Product of equivalent sequences is equivalent) / Exercise 5.3.2 -/
-theorem Sequence.mul_equiv_right {b b':ℕ → ℚ} (a:ℕ → ℚ) (hbb': Equiv b b') :
+theorem Sequence.mul_equiv_right {b b':ℕ → ℚ} (a:ℕ → ℚ)  (ha : (a:Sequence).IsCauchy)  (hbb': Equiv b b') :
   Equiv (a * b) (a * b') := by
   simp_rw [mul_comm]
-  exact mul_equiv_left a hbb'
+  exact mul_equiv_left a ha hbb'
 
 /--Proposition 5.3.10 (Product of equivalent sequences is equivalent) / Exercise 5.3.2 -/
-theorem Sequence.mul_equiv {a b a' b':ℕ → ℚ} (haa': Equiv a a')
-  (hbb': Equiv b b') :
-    Equiv (a * b) (a' * b') :=
-  equiv_trans (mul_equiv_left b haa') (mul_equiv_right a' hbb')
+theorem Sequence.mul_equiv
+{a b a' b':ℕ → ℚ}
+(ha : (a:Sequence).IsCauchy)
+(hb' : (b':Sequence).IsCauchy)
+(haa': Equiv a a')
+(hbb': Equiv b b') :
+    Equiv (a * b) (a' * b') := by
+  have h1 : Equiv (a * b) (a * b') := mul_equiv_right a ha hbb'
+  have h2 : Equiv (a * b') (a' * b') := mul_equiv_left b' hb' haa'
+  exact equiv_trans h1 h2
 
 /-- Definition 5.3.9 (Product of reals) -/
 noncomputable instance Real.mul_inst : Mul Real where
@@ -227,7 +233,7 @@ noncomputable instance Real.mul_inst : Mul Real where
       intro a b a' b' haa' hbb'
       change LIM ((a:ℕ → ℚ) * (b:ℕ → ℚ)) = LIM ((a':ℕ → ℚ) * (b':ℕ → ℚ))
       rw [LIM_eq_LIM]
-      . exact Sequence.mul_equiv haa' hbb'
+      . exact Sequence.mul_equiv (by rw [CauchySequence.coe_to_sequence]; exact a.cauchy) (by rw [CauchySequence.coe_to_sequence]; exact b'.cauchy) haa' hbb'
       all_goals apply Sequence.IsCauchy.mul
       all_goals rw [CauchySequence.coe_to_sequence]
       . exact a.cauchy
@@ -289,7 +295,7 @@ theorem Real.IsCauchy.neg (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) :
     ((-a:ℕ → ℚ):Sequence).IsCauchy := by sorry
 
 
-/-- Proposition 5.3.11 -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.addGroup_inst : AddGroup Real :=
 AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
 
@@ -306,18 +312,18 @@ theorem Real.LIM_sub {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Seque
 theorem Real.ratCast_sub (a b:ℚ) : (a:Real) - (b:Real) = (a-b:ℚ) := by sorry
 
 
-/-- Proposition 5.3.12 (laws of algebra) -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instAddCommGroup : AddCommGroup Real where
   add_comm := by sorry
 
-/-- Proposition 5.3.12 (laws of algebra) -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instCommMonoid : CommMonoid Real where
   mul_comm := by sorry
   mul_assoc := by sorry
   one_mul := by sorry
   mul_one := by sorry
 
-/-- Proposition 5.3.12 (laws of algebra) -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instCommRing : CommRing Real where
   left_distrib := by sorry
   right_distrib := by sorry
@@ -357,7 +363,7 @@ example : ¬ BoundedAwayZero (fun n ↦ 1 - 10^(-(n:ℤ))) := by sorry
 example : BoundedAwayZero (fun n ↦ 10^(n+1)) := by sorry
 
 /-- Examples 5.3.13 -/
-example : ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).IsBounded := by sorry
+example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).IsBounded := by sorry
 
 /-- Lemma 5.3.14 -/
 theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
