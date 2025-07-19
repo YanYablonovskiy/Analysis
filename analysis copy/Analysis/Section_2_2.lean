@@ -202,6 +202,9 @@ lemma Nat.uniq_succ_eq (a:Nat) (ha: a.isPos) : ∃! b, b++ = a := by
 instance Nat.instLE : LE Nat where
   le n m := ∃ a:Nat, m = n + a
 
+--includes 0 as a possibility ↑
+
+
 /-- Definition 2.2.11 (Ordering of the natural numbers)
     This defines the `<` notation on the natural numbers. -/
 instance Nat.instLT : LT Nat where

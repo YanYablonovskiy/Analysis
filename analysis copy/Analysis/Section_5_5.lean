@@ -11,9 +11,6 @@ translation, I have generally chosen the latter.  In particular, there will be p
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
 
-In this section we begin to use the Mathlib API for sets; the Chapter 3 set theory is deprecated
-in favor of this API.
-
 Main constructions and results of this section:
 
 - Upper bound and least upper bound on the real line
@@ -97,7 +94,7 @@ theorem Real.upperBound_discrete_unique {E: Set Real} {n:ℕ} {m m':ℤ}
 
 /-- Exercise 5.5.4 -/
 theorem Real.LIM_of_Cauchy {q:ℕ → ℚ} (hq: ∀ M, ∀ n ≥ M, ∀ n' ≥ M, |q n - q n'| ≤ 1 / (M+1)) :
-    (q:Sequence).isCauchy ∧ ∀ M, |q M - LIM q| ≤ 1 / (M+1) := by sorry
+    (q:Sequence).IsCauchy ∧ ∀ M, |q M - LIM q| ≤ 1 / (M+1) := by sorry
 
 /--
 The sequence m₁, m₂ … is well-defined
@@ -143,12 +140,12 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
     obtain ⟨ m, _, _, hm, hm' ⟩ := claim1_4
     use m
     have : (m/(n+1):ℚ) = m*ε := by
-      simp [ε,mul_of_ratCast]
+      simp [ε,ratCast_mul]
       field_simp
     constructor
     . convert hm
     convert hm'
-    simp [sub_of_ratCast, this, sub_mul, ε]
+    simp [ratCast_sub, this, sub_mul, ε]
   -- Exercise 5.5.3
   intro m m' ⟨ hm1, hm2 ⟩ ⟨ hm'1, hm'2 ⟩
   exact upperBound_discrete_unique hm1 hm2 hm'1 hm'2
@@ -195,15 +192,15 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set a : ℕ → ℚ := fun n ↦ (m n:ℚ) / (n+1)
   set b : ℕ → ℚ := fun n ↦ 1 / (n+1)
   have claim1 (n: ℕ) := Real.LUB_claim1 n hE hbound
-  have hb : (b:Sequence).isCauchy := Cauchy_of_harmonic
+  have hb : (b:Sequence).IsCauchy := IsCauchy.harmonic
   have hm1 (n:ℕ) : (a n:Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.1
   have hm2 (n:ℕ) : ¬ ((a - b) n: Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.2
   have claim2 (N:ℕ) := Real.LUB_claim2 E N a b (fun n ↦ rfl) (fun n ↦ hm1 n) (fun n ↦ hm2 n)
-  have claim3 : (a:Sequence).isCauchy := (LIM_of_Cauchy claim2).1
+  have claim3 : (a:Sequence).IsCauchy := (LIM_of_Cauchy claim2).1
   set S := LIM a
   have claim4 : S = LIM (a - b) := by
-    have : LIM b = 0 := LIM_of_harmonic
-    simp [←sub_of_LIM claim3 hb, S, this]
+    have : LIM b = 0 := LIM.harmonic
+    simp [←LIM_sub claim3 hb, S, this]
   use S
   rw [isLUB_def, upperBound_def]
   constructor
@@ -221,7 +218,7 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
     exact upperBound_upper (le_of_lt hm2) hy
   rw [claim4]
   apply LIM_of_le _ claim5
-  exact sub_of_cauchy claim3 hb
+  exact IsCauchy.sub claim3 hb
 
 /-- A bare-bones extended real class to define supremum. -/
 inductive ExtendedReal where
@@ -246,17 +243,17 @@ instance ExtendedReal.real_coe : Coe ExtendedReal Real where
   | real x => x
   | infty => 0
 
-abbrev ExtendedReal.is_finite (X : ExtendedReal) : Prop := match X with
+abbrev ExtendedReal.IsFinite (X : ExtendedReal) : Prop := match X with
   | neg_infty => False
   | real _ => True
   | infty => False
 
-theorem ExtendedReal.finite_eq_coe {X: ExtendedReal} (hX: X.is_finite) :
+theorem ExtendedReal.finite_eq_coe {X: ExtendedReal} (hX: X.IsFinite) :
     X = ((X:Real):ExtendedReal) := by
   cases X
-  . simp [is_finite] at hX
+  . simp [IsFinite] at hX
   . simp [coe_real, real_coe]
-  simp [is_finite] at hX
+  simp [IsFinite] at hX
 
 open Classical in
 /-- Definition 5.5.10 (Supremum)-/
@@ -283,8 +280,8 @@ theorem ExtendedReal.sup_of_bounded {E: Set Real} (hnon: E.Nonempty) (hb: BddAbo
   convert (Real.LUB_exist hnon hb).choose_spec
 
 theorem ExtendedReal.sup_of_bounded_finite {E: Set Real} (hnon: E.Nonempty) (hb: BddAbove E) :
-    (sup E).is_finite := by
-  simp [sup, hnon, hb, is_finite]
+    (sup E).IsFinite := by
+  simp [sup, hnon, hb, IsFinite]
 
 /-- Proposition 5.5.12 -/
 theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
@@ -387,8 +384,8 @@ theorem ExtendedReal.inf_of_bounded {E: Set Real} (hnon: E.Nonempty) (hb: BddBel
   convert (Real.GLB_exist hnon hb).choose_spec
 
 theorem ExtendedReal.inf_of_bounded_finite {E: Set Real} (hnon: E.Nonempty) (hb: BddBelow E) :
-    (inf E).is_finite := by
-  simp [inf, hnon, hb, is_finite]
+    (inf E).IsFinite := by
+  simp [inf, hnon, hb, IsFinite]
 
 /-- Helper lemma for Exercise 5.5.1. -/
 theorem Real.mem_neg (E: Set Real) (x:Real) : x ∈ -E ↔ -x ∈ E := Set.mem_neg

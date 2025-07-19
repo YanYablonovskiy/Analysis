@@ -12,7 +12,11 @@ text. When there is a choice between a more idiomatic Lean solution and a more f
 translation, I have generally chosen the latter. In particular, there will be places where the
 Lean code could be "golfed" to be more elegant and idiomatic, but I have consciously avoided
 doing so.
+-/
 
+variable (a b : ℕ)
+
+/-!
 Main constructions and results of this section:
 
 - Definition of the "Section 4.1" integers, `Section_4_1.Int`, as formal differences `a —— b` of
@@ -168,11 +172,11 @@ theorem Int.neg_eq (a b:ℕ) : -(a —— b) = b —— a := rfl
 
 example : -(3 —— 5) = 5 —— 3 := by rfl
 
-abbrev Int.isPos (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = n
-abbrev Int.isNeg (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = -n
+abbrev Int.IsPos (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = n
+abbrev Int.IsNeg (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = -n
 
 /-- Lemma 4.1.5 (trichotomy of integers )-/
-theorem Int.trichotomous (x:Int) : x = 0 ∨ x.isPos ∨ x.isNeg := by
+theorem Int.trichotomous (x:Int) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by
   -- This proof is slightly modified from that in the original text.
   obtain ⟨ a, b, rfl ⟩ := eq_diff x
   have := _root_.trichotomous (r := LT.lt) a b
@@ -190,19 +194,19 @@ theorem Int.trichotomous (x:Int) : x = 0 ∨ x.isPos ∨ x.isNeg := by
   abel
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
-theorem Int.not_pos_zero (x:Int) : x = 0 ∧ x.isPos → False := by
+theorem Int.not_pos_zero (x:Int) : x = 0 ∧ x.IsPos → False := by
   rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩
   simp [←natCast_ofNat] at hn'
   linarith
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
-theorem Int.not_neg_zero (x:Int) : x = 0 ∧ x.isNeg → False := by
+theorem Int.not_neg_zero (x:Int) : x = 0 ∧ x.IsNeg → False := by
   rintro ⟨ rfl, ⟨ n, hn, hn' ⟩ ⟩
   simp_rw [←natCast_ofNat, natCast_eq, neg_eq, eq] at hn'
   linarith
 
 /-- Lemma 4.1.5 (trichotomy of integers)-/
-theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
+theorem Int.not_pos_neg (x:Int) : x.IsPos ∧ x.IsNeg → False := by
   rintro ⟨ ⟨ n, hn, rfl ⟩, ⟨ m, hm, hm' ⟩ ⟩
   simp_rw [natCast_eq, neg_eq, eq] at hm'
   linarith
@@ -225,9 +229,7 @@ instance Int.instCommMonoid : CommMonoid Int where
     obtain ⟨ c, d, rfl ⟩ := eq_diff y
     obtain ⟨ e, f, rfl ⟩ := eq_diff z
     simp_rw [mul_eq]
-    congr 1
-    . ring
-    ring
+    congr 1 <;> ring
   one_mul := by sorry
   mul_one := by sorry
 

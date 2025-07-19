@@ -40,7 +40,7 @@ theorem OrderedPair.eq (x y x' y' : Object) :
     (⟨ x, y ⟩ : OrderedPair) = (⟨ x', y' ⟩ : OrderedPair) ↔ x = x' ∧ y = y' := by aesop
 
 /-- Exercise 3.5.1 -/
-abbrev OrderedPair.toObject : OrderedPair ↪ Object where
+def OrderedPair.toObject : OrderedPair ↪ Object where
   toFun p := ({ (({p.fst}:Set):Object), (({p.fst, p.snd}:Set):Object) }:Set)
   inj' := by sorry
 
@@ -54,8 +54,7 @@ instance OrderedPair.inst_coeObject : Coe OrderedPair Object where
 abbrev SetTheory.Set.slice (x:Object) (Y:Set) : Set :=
   Y.replace (P := fun y z ↦ z = (⟨x, y⟩:OrderedPair)) (by
     intro y z z' ⟨ hz, hz'⟩
-    simp at hz hz'
-    rw [hz, hz']
+    simp_all
   )
 
 theorem SetTheory.Set.mem_slice (x z:Object) (Y:Set) :
@@ -65,8 +64,7 @@ theorem SetTheory.Set.mem_slice (x z:Object) (Y:Set) :
 abbrev SetTheory.Set.cartesian (X Y:Set) : Set :=
   union (X.replace (P := fun x z ↦ z = slice x Y) (by
     intro x z z' ⟨ hz, hz' ⟩
-    simp at hz hz'
-    rw [hz, hz']
+    simp_all
   ))
 
 /-- This instance enables the ×ˢ notation for Cartesian product. -/
@@ -82,8 +80,7 @@ theorem SetTheory.Set.mem_cartesian (z:Object) (X Y:Set) :
     rw [replacement_axiom] at hS
     obtain ⟨ x, hx ⟩ := hS
     simp at hx
-    rw [hx] at hz
-    rw [mem_slice] at hz
+    rw [hx, mem_slice] at hz
     obtain ⟨ y, rfl ⟩ := hz
     use x, y
   intro h
@@ -112,8 +109,7 @@ theorem SetTheory.Set.pair_eq_fst_snd {X Y:Set} (z:X ×ˢ Y) :
   obtain ⟨ x, hx ⟩ := (exists_comm.mp ((mem_cartesian _ _ _).mp z.property)).choose_spec
   change z.val = (⟨ fst z, y ⟩:OrderedPair) at hy
   change z.val = (⟨ x, snd z ⟩:OrderedPair) at hx
-  rw [hx] at hy ⊢
-  simp only [EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy ⊢
+  simp only [hx, EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy ⊢
   simp [hy.1]
 
 noncomputable abbrev SetTheory.Set.uncurry {X Y Z:Set} (f: X → Y → Z) : X ×ˢ Y → Z :=
@@ -146,7 +142,7 @@ noncomputable abbrev SetTheory.Set.prod_equiv_prod (X Y:Set) :
 
 /-- Definition 3.5.7 -/
 abbrev SetTheory.Set.tuple {I:Set} {X: I → Set} (a: ∀ i, X i) : Object :=
-  object_of ((fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩):I → iUnion I X)
+  ((fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩):I → iUnion I X)
 
 /-- Definition 3.5.7 -/
 abbrev SetTheory.Set.iProd {I: Set} (X: I → Set) : Set :=
@@ -161,7 +157,7 @@ theorem SetTheory.Set.mem_iProd {I: Set} {X: I → Set} (t:Object) :
     use a
   intro ⟨ a, ha ⟩
   have h : t ∈ (I.iUnion X)^I := by
-    rw [power_set_axiom, ha]
+    rw [powerset_axiom, ha]
     use fun i ↦ ⟨ a i, by rw [mem_iUnion]; use i; exact (a i).property ⟩
   use h, a
 
@@ -243,8 +239,7 @@ theorem SetTheory.Set.mem_Fin (n:ℕ) (x:Object) : x ∈ Fin n ↔ ∃ m, m < n 
       x = (⟨ x, h1 ⟩:nat) := by rfl
       _ = _ :=  by congr; simp
   intro ⟨ m, hm, h ⟩
-  have hn : x ∈ nat := by rw [h, ←SetTheory.Object.ofnat_eq]; exact (m:nat).property
-  use hn
+  use (by rw [h, ←SetTheory.Object.ofnat_eq]; exact (m:nat).property)
   convert hm
   simp [h, Equiv.symm_apply_eq]
   rfl
@@ -284,8 +279,7 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
       rw [eq_empty_iff_forall_notMem]
       intro x
       by_contra! h
-      rw [specification_axiom''] at h
-      simp at h
+      simp [specification_axiom''] at h
     have empty (i:Fin 0) : X i := False.elim (by rw [this] at i; exact not_mem_empty i i.property)
     apply nonempty_of_inhabited (x := tuple empty)
     rw [mem_iProd]
@@ -381,7 +375,7 @@ theorem SetTheory.Set.union_prod (A B C:Set) : (A ∪ B) ×ˢ C = (A ×ˢ C) ∪
 theorem SetTheory.Set.inter_prod (A B C:Set) : (A ∩ B) ×ˢ C = (A ×ˢ C) ∩ (B ×ˢ C) := by sorry
 
 /-- Exercise 3.5.4 -/
-theorem SetTheory.Set.diff_prod (A B C:Set) : (A \ B) ×ˢ C = (A ×ˢ C) \ (A ×ˢ B) := by sorry
+theorem SetTheory.Set.diff_prod (A B C:Set) : (A \ B) ×ˢ C = (A ×ˢ C) \ (B ×ˢ C) := by sorry
 
 /-- Exercise 3.5.5 -/
 theorem SetTheory.Set.inter_of_prod (A B C D:Set) :
@@ -420,7 +414,7 @@ theorem SetTheory.Set.direct_sum {X Y Z:Set} (f: Z → X) (g: Z → Y) :
 /-- Exercise 3.5.8 -/
 @[simp]
 theorem SetTheory.Set.iProd_empty_iff {n:ℕ} {X: Fin n → Set} :
-    iProd X = ∅ ↔ ∀ i, X i = ∅ := by sorry
+    iProd X = ∅ ↔ ∃ i, X i = ∅ := by sorry
 
 /-- Exercise 3.5.9-/
 theorem SetTheory.Set.iUnion_inter_iUnion {I J: Set} (A: I → Set) (B: J → Set) :
@@ -438,11 +432,11 @@ theorem SetTheory.Set.is_graph {X Y G:Set} (hG: G ⊆ X ×ˢ Y)
     ∃! f: X → Y, G = graph f := by sorry
 
 /--
-  Exercise 3.5.11. This trivially follows from `SetTheory.Set.power_set_axiom'`, but the
-  exercise is to derive it from `SetTheory.Set.mem_powerset` instead.
+  Exercise 3.5.11. This trivially follows from `SetTheory.Set.powerset_axiom`, but the
+  exercise is to derive it from `SetTheory.Set.exists_powerset` instead.
 -/
-theorem SetTheory.Set.power_set_axiom' (X Y:Set) :
-    ∃! S:Set, ∀(F:Object), F ∈ S ↔ ∃ f: Y → X, object_of f = F := sorry
+theorem SetTheory.Set.powerset_axiom' (X Y:Set) :
+    ∃! S:Set, ∀(F:Object), F ∈ S ↔ ∃ f: Y → X, f = F := sorry
 
 /-- Exercise 3.5.12, with errata from web site incorporated -/
 theorem SetTheory.Set.recursion (X: Type) (f: nat → X → X) (c:X) :
