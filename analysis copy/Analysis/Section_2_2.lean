@@ -196,11 +196,17 @@ lemma Nat.uniq_succ_eq (a:Nat) (ha: a.isPos) : ∃! b, b++ = a := by
      rw [Nat.succ_cancel hm]
 
 
-
+#check LE.mk
 /-- Definition 2.2.11 (Ordering of the natural numbers)
     This defines the `≤` operation on the natural numbers. -/
 instance Nat.instLE : LE Nat where
   le n m := ∃ a:Nat, m = n + a
+
+--no requirement on transitivity
+
+--just notational.
+
+
 
 --includes 0 as a possibility ↑
 
@@ -242,7 +248,16 @@ example : (8:Nat) > 5 := by
 
 /-- Compare with Mathlib's `Nat.lt_succ_self`-/
 theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
-  sorry
+  rw [gt_iff_lt,lt_iff]
+  constructor
+  · use 1
+    rw [Nat.succ_eq_add_one]
+  · simp
+    induction' n with m ih
+    · simp
+    · simp [ih]
+
+
 
 /-- Proposition 2.2.12 (Basic properties of order for natural numbers) / Exercise 2.2.3
 
