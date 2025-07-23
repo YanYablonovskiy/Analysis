@@ -115,6 +115,33 @@ theorem SetTheory.Set.pair_eq_fst_snd {X Y:Set} (z:X ×ˢ Y) :
   simp only [hx, EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy ⊢
   simp [hy.1]
 
+def SetTheory.Set.mk_cartesian {X Y:Set} (x:X) (y:Y) : X ×ˢ Y :=
+  ⟨(⟨ x, y ⟩:OrderedPair), by rw [mem_cartesian]; use x, y⟩
+
+@[simp]
+theorem SetTheory.Set.fst_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
+    fst (mk_cartesian x y) = x := by
+  let z := mk_cartesian x y
+  obtain ⟨ y', hy ⟩ := ((mem_cartesian _ _ _).mp z.property).choose_spec
+  change z.val = (⟨ fst z, y' ⟩:OrderedPair) at hy
+  unfold z at hy
+  rw [mk_cartesian] at hy ⊢
+  rw [EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hy
+  rw [Subtype.val_inj] at hy
+  rw [← hy.1]
+
+@[simp]
+theorem SetTheory.Set.snd_of_mk_cartesian {X Y:Set} (x:X) (y:Y) :
+    snd (mk_cartesian x y) = y := by
+  let z := mk_cartesian x y
+  obtain ⟨ x', hx ⟩ := (exists_comm.mp ((mem_cartesian _ _ _).mp z.property)).choose_spec
+  change z.val = (⟨ x', snd z ⟩:OrderedPair) at hx
+  unfold z at hx
+  rw [mk_cartesian] at hx ⊢
+  rw [EmbeddingLike.apply_eq_iff_eq, OrderedPair.eq] at hx
+  repeat rw [Subtype.val_inj] at hx
+  rw [← hx.2]
+
 noncomputable abbrev SetTheory.Set.uncurry {X Y Z:Set} (f: X → Y → Z) : X ×ˢ Y → Z :=
   fun z ↦ f (fst z) (snd z)
 
@@ -239,7 +266,7 @@ theorem SetTheory.Set.mem_Fin (n:ℕ) (x:Object) : x ∈ Fin n ↔ ∃ m, m < n 
     use ((⟨ x, h1 ⟩:nat):ℕ)
     simp [h2]
     calc
-      x = (⟨ x, h1 ⟩:nat) := by rfl
+      x = (⟨ x, h1 ⟩:nat) := rfl
       _ = _ :=  by congr; simp
   intro ⟨ m, hm, h ⟩
   use (by rw [h, ←SetTheory.Object.ofnat_eq]; exact (m:nat).property)
@@ -280,7 +307,7 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
   induction' n with n hn
   . have : Fin 0 = ∅ := by
       rw [eq_empty_iff_forall_notMem]
-      intro x
+      intros
       by_contra! h
       simp [specification_axiom''] at h
     have empty (i:Fin 0) : X i := False.elim (by rw [this] at i; exact not_mem_empty i i.property)
@@ -289,8 +316,7 @@ theorem SetTheory.Set.finite_choice {n:ℕ} {X: Fin n → Set} (h: ∀ i, X i �
     use empty
   set X' : Fin n → Set := fun i ↦ X (Fin_embed n (n+1) (by linarith) i)
   have hX' (i: Fin n) : X' i ≠ ∅ := h _
-  specialize hn hX'
-  obtain ⟨ x'_obj, hx' ⟩ := nonempty_def hn
+  obtain ⟨ x'_obj, hx' ⟩ := nonempty_def (hn hX')
   rw [mem_iProd] at hx'
   obtain ⟨ x', rfl ⟩ := hx'
   set last : Fin (n+1) := Fin_mk (n+1) n (by linarith)
