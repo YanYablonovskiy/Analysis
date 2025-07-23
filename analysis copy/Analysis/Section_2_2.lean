@@ -298,7 +298,9 @@ theorem Nat.ge_antisymm {a b:Nat} (hab: a ≥ b) (hba: b ≥ a) : a = b := by
 
 /-- (d) (Addition preserves order).  Compare with Mathlib's `Nat.add_le_add_right`  -/
 theorem Nat.add_ge_add_right (a b c:Nat) : a ≥ b ↔ a + c ≥ b + c := by
-  sorry
+  constructor
+  · intro hab
+    rw [ge_iff_le,le_iff] at hab
 
 /-- (d) (Addition preserves order).  Compare with Mathlib's `Nat.add_le_add_left`  -/
 theorem Nat.add_ge_add_left (a b c:Nat) : a ≥ b ↔ c + a ≥ c + b := by
