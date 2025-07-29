@@ -347,11 +347,11 @@ theorem SetTheory.Set.preimage_eq_image_of_inv {X Y V:Set} (f:X → Y) (f_inv: Y
 
 /- Exercise 3.4.2.  State and prove an assertion connecting `image f (preimage f U)` and `U`.
 Interestingly, it is not needed for U to be a subset of Y. -/
--- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
+-- theorem SetTheory.Set.image_of_preimage {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
-/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f (preimage f U))` and `U`.
+/- Exercise 3.4.2.  State and prove an assertion connecting `preimage f (image f (preimage f U))` and `preimage f U`.
 Interestingly, it is not needed for U to be a subset of Y.-/
--- theorem SetTheory.Set.preimage_of_image {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
+-- theorem SetTheory.Set.preimage_of_image_of_preimage {X Y:Set} (f:X → Y) (U: Set) : sorry := by sorry
 
 /--
   Exercise 3.4.3.
@@ -390,6 +390,12 @@ theorem SetTheory.Set.image_preimage_of_surj {X Y:Set} (f:X → Y) :
 /-- Exercise 3.4.5 -/
 theorem SetTheory.Set.preimage_image_of_inj {X Y:Set} (f:X → Y) :
     (∀ S, S ⊆ X → preimage f (image f S) = S) ↔ Function.Injective f := by sorry
+
+/-- Helper lemma for Exercise 3.4.7. -/
+@[simp]
+lemma SetTheory.Set.mem_powerset' {S S' : Set} : (S': Object) ∈ S.powerset ↔ S' ⊆ S := by
+  rw [mem_powerset]
+  simp
 
 /-- Exercise 3.4.7 -/
 theorem SetTheory.Set.partial_functions {X Y:Set} :
