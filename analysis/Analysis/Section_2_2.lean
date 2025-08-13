@@ -168,7 +168,7 @@ lemma Nat.uniq_succ_eq (a:Nat) (ha: a.IsPos) : ∃! b, b++ = a := by
   sorry
 
 /-- Definition 2.2.11 (Ordering of the natural numbers).
-    This defines the `≤` operation on the natural numbers. -/
+    This defines the `≤` notation on the natural numbers. -/
 instance Nat.instLE : LE Nat where
   le n m := ∃ a:Nat, m = n + a
 
@@ -182,9 +182,11 @@ lemma Nat.le_iff (n m:Nat) : n ≤ m ↔ ∃ a:Nat, m = n + a := by rfl
 lemma Nat.lt_iff (n m:Nat) : n < m ↔ (∃ a:Nat, m = n + a) ∧ n ≠ m := by rfl
 
 /-- Compare with Mathlib's `ge_iff_le`. -/
+@[symm]
 lemma Nat.ge_iff_le (n m:Nat) : n ≥ m ↔ m ≤ n := by rfl
 
 /-- Compare with Mathlib's `gt_iff_lt`. -/
+@[symm]
 lemma Nat.gt_iff_lt (n m:Nat) : n > m ↔ m < n := by rfl
 
 /-- Compare with Mathlib's `Nat.le_of_lt`. -/
@@ -217,10 +219,18 @@ theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
 theorem Nat.ge_refl (a:Nat) : a ≥ a := by
   sorry
 
+@[refl]
+theorem Nat.le_refl (a:Nat) : a ≤ a := a.ge_refl
+
+/-- The refl tag allows for the `rfl` tactic to work for inequalities. -/
+example (a b:Nat): a+b ≥ a+b := by rfl
+
 /-- (b) (Order is transitive).  The `obtain` tactic will be useful here.
     Compare with Mathlib's `Nat.le_trans`. -/
 theorem Nat.ge_trans {a b c:Nat} (hab: a ≥ b) (hbc: b ≥ c) : a ≥ c := by
   sorry
+
+theorem Nat.le_trans {a b c:Nat} (hab: a ≤ b) (hbc: b ≤ c) : a ≤ c := Nat.ge_trans hbc hab
 
 /-- (c) (Order is anti-symmetric). Compare with Mathlib's `Nat.le_antisymm`. -/
 theorem Nat.ge_antisymm {a b:Nat} (hab: a ≥ b) (hba: b ≥ a) : a = b := by
@@ -260,9 +270,22 @@ theorem Nat.ne_of_gt (a b:Nat) : a > b → a ≠ b := by
 /-- If a > b and a < b then contradiction -/
 theorem Nat.not_lt_of_gt (a b:Nat) : a < b ∧ a > b → False := by
   intro h
-  have := (ge_antisymm (Nat.le_of_lt h.1) (Nat.le_of_lt h.2)).symm
+  have := (ge_antisymm (le_of_lt h.1) (le_of_lt h.2)).symm
   have := ne_of_lt _ _ h.1
   contradiction
+
+theorem Nat.not_lt_self {a: Nat} (h : a < a) : False := by
+  apply not_lt_of_gt a a
+  simp [h]
+
+theorem Nat.lt_of_le_of_lt {a b c : Nat} (hab: a ≤ b) (hbc: b < c) : a < c := by
+  rw [lt_iff_add_pos] at *
+  rcases hab with ⟨d, hd⟩
+  rcases hbc with ⟨e, he1, he2⟩
+  use d + e
+  constructor
+  . exact add_pos_right d he1
+  . rw [he2, hd, add_assoc]
 
 /-- This lemma was a `why?` statement from Proposition 2.2.13,
 but is more broadly useful, so is extracted here. -/
@@ -270,17 +293,18 @@ theorem Nat.zero_le (a:Nat) : 0 ≤ a := by
   sorry
 
 /-- Proposition 2.2.13 (Trichotomy of order for natural numbers) / Exercise 2.2.4
-    Compare with Mathlib's `trichotomous`. -/
+    Compare with Mathlib's `trichotomous`.  Parts of this theorem have been placed
+    in the preceding Lean theorems. -/
 theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   -- This proof is written to follow the structure of the original text.
   revert a; apply induction
   . have why : 0 ≤ b := b.zero_le
-    replace why := (Nat.le_iff_lt_or_eq _ _).mp why
+    replace why := (le_iff_lt_or_eq _ _).mp why
     tauto
   intro a ih
   rcases ih with case1 | case2 | case3
   . rw [lt_iff_succ_le] at case1
-    rw [Nat.le_iff_lt_or_eq] at case1
+    rw [le_iff_lt_or_eq] at case1
     tauto
   . have why : a++ > b := by sorry
     tauto
@@ -316,21 +340,51 @@ def Nat.decLe : (a b : Nat) → Decidable (a ≤ b)
 
 instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := Nat.decLe
 
-
 /-- (Not from textbook) Nat has the structure of a linear ordering. This allows for tactics
-such as `order` to be applicable to the Chapter 2 natural numbers. -/
-instance Nat.linearOrder : LinearOrder Nat where
+such as `order` and `calc` to be applicable to the Chapter 2 natural numbers. -/
+instance Nat.instLinearOrder : LinearOrder Nat where
   le_refl := ge_refl
   le_trans a b c hab hbc := ge_trans hbc hab
-  lt_iff_le_not_le := sorry
+  lt_iff_le_not_le := by
+    intro a b
+    constructor
+    intro h
+    constructor
+    . exact le_of_lt h
+    . by_contra h'
+      exact not_lt_self (lt_of_le_of_lt h' h)
+
+    rintro ⟨ h1, h2 ⟩
+    rw [lt_iff, ← le_iff]
+    constructor
+    exact h1
+    by_contra h
+    rw [h] at h2
+    apply h2
+    exact ge_refl b
   le_antisymm a b hab hba := ge_antisymm hba hab
-  le_total := sorry
+  le_total := by
+    intro a b
+    obtain h | h | h := trichotomous a b
+    . left; exact le_of_lt h
+    . simp [h, ge_refl]
+    . right; exact le_of_lt h
   toDecidableLE := decidableRel
 
 /-- This illustration of the `order` tactic is not from the
     textbook. -/
 example (a b c d:Nat) (hab: a ≤ b) (hbc: b ≤ c) (hcd: c ≤ d)
         (hda: d ≤ a) : a = c := by order
+
+/-- An illustration of the `calc` tactic with `≤/<`. -/
+example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hcd: c ≤ d)
+        (hde: d ≤ e) : a + 0 < e := by
+  calc
+    a + 0 = a := by simp
+        _ ≤ b := hab
+        _ < c := hbc
+        _ ≤ d := hcd
+        _ ≤ e := hde
 
 /-- (Not from textbook) Nat has the structure of an ordered monoid. This allows for tactics
 such as `gcongr` to be applicable to the Chapter 2 natural numbers. -/
@@ -342,7 +396,7 @@ instance Nat.isOrderedAddMonoid : IsOrderedAddMonoid Nat where
 /-- This illustration of the `gcongr` tactic is not from the
     textbook. -/
 example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hde: d < e) :
-  a+d ≤ c + e := by
+  a + d ≤ c + e := by
   gcongr
   order
 
