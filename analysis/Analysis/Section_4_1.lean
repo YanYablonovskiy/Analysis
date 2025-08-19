@@ -159,9 +159,8 @@ abbrev Int.IsNeg (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = -n
 theorem Int.trichotomous (x:Int) : x = 0 ∨ x.IsPos ∨ x.IsNeg := by
   -- This proof is slightly modified from that in the original text.
   obtain ⟨ a, b, rfl ⟩ := eq_diff x
-  have := _root_.trichotomous (r := LT.lt) a b
-  rcases this with h_lt | rfl | h_gt
-  . obtain ⟨ c,rfl ⟩ := Nat.exists_eq_add_of_lt h_lt
+  obtain h_lt | rfl | h_gt := _root_.trichotomous (r := LT.lt) a b
+  . obtain ⟨ c, rfl ⟩ := Nat.exists_eq_add_of_lt h_lt
     right; right; refine ⟨ c+1, by linarith, ?_ ⟩
     simp_rw [natCast_eq, neg_eq, eq]; abel
   . left; simp_rw [ofNat_eq, eq, add_zero, zero_add]
@@ -287,7 +286,7 @@ lemma Int.is_additive_identity_iff_eq_0 (b : Int) : (∀ a, a = a + b) ↔ b = 0
 instance Int.instLinearOrder : LinearOrder Int where
   le_refl := sorry
   le_trans := sorry
-  lt_iff_le_not_le := sorry
+  lt_iff_le_not_ge := sorry
   le_antisymm := sorry
   le_total := sorry
   toDecidableLE := decidableRel

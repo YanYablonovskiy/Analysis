@@ -103,7 +103,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   -- This proof is written to broadly follow the structure of the original text.
   revert X n; intro n
   induction' n with n hn
-  . simp [sum_of_empty (show 0 < 1 by norm_num) (fun _ ↦ 0)]
+  . simp
   intro X hX g h hg hh
   -- A technical step: we extend g, h to the entire integers using a slightly artificial map π
   set π : ℤ → Icc (1:ℤ) (n+1) :=
@@ -116,7 +116,7 @@ theorem finite_series_of_rearrange {n:ℕ} {X':Type*} (X: Finset X') (hcard: X.c
   simp [-mem_Icc, hπ]
   rw [sum_of_nonempty (by linarith) _]
   set x := g (π (n+1))
-  obtain ⟨⟨j, hj'⟩, hj⟩ := hh.surjective x
+  have ⟨⟨j, hj'⟩, hj⟩ := hh.surjective x
   simp at hj'; obtain ⟨ hj1, hj2 ⟩ := hj'
   set h' : ℤ → X := fun i ↦ if (i:ℤ) < j then h (π i) else h (π (i+1))
   have : ∑ i ∈ Icc (1:ℤ) (n + 1), f (h (π i)) = ∑ i ∈ Icc (1:ℤ) n, f (h' i) + f x := calc
@@ -184,11 +184,11 @@ theorem finite_series_eq {n:ℕ} {Y:Type*} (X: Finset Y) (f: Y → ℝ) (g: Icc 
     ∑ i ∈ X, f i = ∑ i ∈ Icc (1:ℤ) n, (if hi:i ∈ Icc (1:ℤ) n then f (g ⟨ i, hi ⟩) else 0) := by
   symm
   convert sum_bij (t:=X) (fun i hi ↦ g ⟨ i, hi ⟩ ) _ _ _ _
-  . intro i hi; simp [hi]
+  . aesop
   . intro i hi j hj h
     simpa [Subtype.val_inj, hg.injective.eq_iff] using h
   . intro b hb
-    obtain ⟨⟨i, hi⟩, h⟩ := hg.surjective ⟨ b, hb ⟩
+    have ⟨⟨i, hi⟩, h⟩ := hg.surjective ⟨ b, hb ⟩
     use i, hi; simp [h]
   intros; simp_all
 
@@ -242,7 +242,7 @@ theorem finite_series_of_finite_series {XX YY:Type*} (X: Finset XX) (Y: Finset Y
   . sorry
   intro X hX
   have hnon : X.Nonempty := by rw [←card_ne_zero]; linarith
-  obtain ⟨ x₀, hx₀ ⟩ := hnon.exists_mem
+  choose x₀ hx₀ using hnon.exists_mem
   set X' := X.erase x₀
   have hcard : X'.card = n := by simp [X', card_erase_of_mem hx₀, hX]
   have hunion : X = X' ∪ {x₀} := by ext x; by_cases h:x = x₀ <;> simp [h,X', hx₀]

@@ -30,7 +30,7 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
   ContinuousOn (fun x => integ f (Icc a x)) (.Icc a b) := by
   -- This proof is written to follow the structure of the original text.
   set F : ℝ → ℝ := fun x => integ f (Icc a x)
-  obtain ⟨ M, hM ⟩ := hf.1
+  choose M hM using hf.1
   have {x y:ℝ} (hxy: x < y) (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) : |F y - F x| ≤ M * (y - x) := by
     simp at hx hy
     have := (hf.join (join_Icc_Ioc hy.1 hy.2)).1
@@ -52,9 +52,9 @@ theorem cts_of_integ {a b:ℝ} {f:ℝ → ℝ} (hf: IntegrableOn f (Icc a b)) :
     rw [abs_le'] at hM; simp; linarith
   replace {x y:ℝ} (hx: x ∈ Set.Icc a b) (hy: y ∈ Set.Icc a b) :
     |F y - F x| ≤ M * |x-y| := by
-    rcases lt_trichotomy x y with h | h | h
+    obtain h | rfl | h := lt_trichotomy x y
     . simp [abs_of_neg (show x-y < 0 by linarith), this h hx hy]
-    . simp [h]
+    . simp
     . simp [abs_of_pos (show 0 < x-y by linarith), abs_sub_comm, this h hy hx]
   replace : UniformContinuousOn F (.Icc a b) := by
     simp [Metric.uniformContinuousOn_iff, Real.dist_eq, -Set.mem_Icc]
@@ -76,13 +76,13 @@ theorem deriv_of_integ {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: IntegrableOn 
   rw [HasDerivWithinAt.iff_approx_linear]
   simp [(ContinuousWithinAt.tfae _ f hx₀).out 0 2] at hcts
   peel hcts with ε hε δ hδ hconv; intro y hy hyδ
-  rcases lt_trichotomy x₀ y with hx₀y | rfl | hx₀y
+  obtain hx₀y | rfl | hx₀y := lt_trichotomy x₀ y
   . have := ((hf.join (join_Icc_Ioc hy.1 hy.2)).1.join (join_Icc_Ioc hx₀.1 (le_of_lt hx₀y))).2
     simp [this.2, abs_le', abs_of_pos (show 0 < y - x₀ by linarith)]
     have h1 := this.1.mono (g := fun _ ↦ f x₀ + ε) (IntegrableOn.const _ _).1 ?_
     have h2 := (IntegrableOn.const _ _).1.mono (f := fun _ ↦ f x₀ - ε) this.1 ?_
     . simp [IntegrableOn.const, le_of_lt hx₀y] at h1 h2
-      and_intros
+      split_ands
       . convert h1 using 1; ring
       . simp [←sub_nonneg] at *; convert h2 using 1; ring
     all_goals intro z hz; simp [abs_lt] at *; specialize hconv z ?_ ?_ ?_ ?_ <;> linarith
@@ -120,7 +120,7 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
   (hf: IntegrableOn f (Icc a b)) (hF: AntiderivOn F f (Icc a b)) :
   integ f (Icc a b) = F b - F a := by
   -- This proof is written to follow the structure of the original text.
-  rcases lt_or_eq_of_le h with h | h
+  obtain h | h := lt_or_eq_of_le h
   . have hF_cts : ContinuousOn F (.Icc a b) := by
       intro x hx; exact ContinuousWithinAt.of_differentiableWithinAt (hF.1 x hx)
     -- for technical reasons we need to extend F by constant outside of Icc a b
@@ -139,8 +139,8 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
           apply Finset.sum_le_sum
           intro J hJ; by_cases hJ_empty : (J:Set ℝ) = ∅
           . simp [α_length_of_empty _ hJ_empty, length_of_empty hJ_empty]
-          rcases le_or_gt J.b J.a with hJab | hJab
-          . push_neg at hJ_empty; obtain ⟨ x, hx ⟩ := hJ_empty
+          obtain hJab | hJab := le_or_gt J.b J.a
+          . push_neg at hJ_empty; choose x hx using hJ_empty
             cases J with
             | Ioo _ _ => simp at hx; linarith
             | Ioc _ _ => simp at hx; linarith
@@ -149,25 +149,25 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
               simp at hx
               simp [show c = d by linarith]
               have hnhds: (Ioo (a-1) (b+1):Set ℝ) ∈ nhds d := by
-                replace hJ := P.contains _ hJ
+                apply P.contains at hJ
                 simp [subset_iff] at hJ
                 rw [Set.Icc_subset_Icc_iff (by linarith)] at hJ
                 apply Ioo_mem_nhds <;> linarith
               rw [α_length_of_pt, jump_of_continuous hnhds (hF'_cts _ (mem_of_mem_nhds hnhds))]
           set c := J.a
           set d := J.b
-          replace hJ := P.contains _ hJ
+          apply P.contains at hJ
           have hJ' : Icc a b ⊆ Ioo (a-1/2) (b+1/2) := by apply Set.Icc_subset_Ioo <;> linarith
-          replace hJ' := ((Ioo_subset J).trans hJ).trans hJ'
+          apply ((Ioo_subset J).trans hJ).trans at hJ'
           simp [subset_iff] at hJ'
           rw [Set.Ioo_subset_Ioo_iff hJab] at hJ'
           have hJ'' : Icc a b ⊆ Ioo (a-1) (b+1) := by apply Set.Icc_subset_Ioo <;> linarith
-          replace hJ'' := hJ.trans hJ''
+          apply hJ.trans at hJ''
           rw [α_length_of_cts (by linarith) (le_of_lt hJab) (by linarith) hJ'' hF'_cts]
           have := HasDerivWithinAt.mean_value hJab (hF'_cts.mono ?_) ?_
-          . obtain ⟨ e, he, hmean ⟩ := this
+          . choose e he hmean using this
             have : HasDerivWithinAt F' (f e) (.Ioo c d) e := by
-              replace hJ := (Ioo_subset J).trans hJ
+              apply (Ioo_subset J).trans at hJ
               simp [subset_iff] at hJ
               apply ((hF.2 e (hJ he)).mono hJ).congr (f := F)
               all_goals intros; solve_by_elim
@@ -181,8 +181,8 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
                 _ ≤ _ := by
                   gcongr; apply le_csSup
                   . rw [bddAbove_def]
-                    obtain ⟨ M, hM ⟩ := hf.1; use M
-                    simp [abs_le', F', -Set.mem_Icc] at hM ⊢
+                    choose M hM using hf.1; use M
+                    simp [abs_le', -Set.mem_Icc] at hM ⊢
                     intro x hx; rw [subset_iff] at hJ; specialize hM x (hJ hx); tauto
                   simp; use e; simp; exact ((subset_iff _ _).mp (Ioo_subset J)) he
             rw [←mem_closure_iff_clusterPt]
@@ -190,17 +190,17 @@ theorem integ_eq_antideriv_sub {a b:ℝ} (h:a ≤ b) {f F: ℝ → ℝ}
             . intro _ _; simp at *; refine ⟨ ⟨ ?_, ?_ ⟩, ?_ ⟩ <;> linarith
             simp at he; rw [closure_Ioo (by linarith)]; simp; linarith
           . simp; rw [Set.Icc_subset_Ioo_iff (le_of_lt hJab)]; constructor <;> linarith
-          replace hJ := (Ioo_subset J).trans hJ
+          apply (Ioo_subset J).trans at hJ
           apply (hF.1.mono _).congr
           . intro x hx
             have : x ∈ Set.Icc a b := by specialize hJ _ hx; simpa using hJ
-            simp only [ite_eq_left_iff, F']; tauto
+            simp only [F']; tauto
           simpa [subset_iff] using hJ
         _ = F'[Icc a b]ₗ := P.sum_of_α_length F'
         _ = F' b - F' a := by
           apply α_length_of_cts (by linarith) _ (by linarith) _ hF'_cts
           . simp [le_of_lt h]
-          intro _ _; simp [mem_iff] at *; and_intros <;> linarith
+          intro _ _; simp [mem_iff] at *; split_ands <;> linarith
         _ = _ := by congr 1 <;> apply hFF' <;> simp [le_of_lt h]
     have hlower (P: Partition (Icc a b)) : lower_riemann_sum f P ≤ F b - F a := by
       sorry

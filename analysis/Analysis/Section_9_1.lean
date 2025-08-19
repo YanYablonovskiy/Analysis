@@ -81,7 +81,7 @@ example : ¬ AdherentPt 2 (.Ioo 0 1) := by sorry
 theorem closure_def (X:Set ℝ) : closure X = { x | AdherentPt x X } := by
   ext; simp [Real.mem_closure_iff, AdherentPt, Real.adherent']
   constructor <;> intro h ε hε
-  all_goals obtain ⟨ y, hy, hxy ⟩ := h (ε/2) (half_pos hε); exact ⟨ y, hy, by rw [abs_sub_comm]; linarith ⟩
+  all_goals choose y hy hxy using h _ (half_pos hε); exact ⟨ y, hy, by rw [abs_sub_comm]; linarith ⟩
 
 theorem closure_def' (X:Set ℝ) (x :ℝ) : x ∈ closure X ↔ AdherentPt x X := by
   simp [closure_def]
@@ -111,7 +111,7 @@ theorem closure_of_Ioo {a b:ℝ} (h:a < b) : closure (.Ioo a b) = .Icc a b := by
   ext x; simp [closure_def, AdherentPt, Real.adherent']
   constructor
   . intro h; contrapose! h
-    rcases le_or_gt a x with h' | h'
+    obtain h' | h' := le_or_gt a x
     . specialize h h'
       use x-b, by linarith
       intro y ⟨ h1, h2 ⟩; observe : x-y ≤ |x-y|; linarith
@@ -310,7 +310,7 @@ theorem isBounded_def (X: Set ℝ) : Bornology.IsBounded X ↔ ∃ M > 0, X ⊆ 
   constructor
   . intro ⟨ C, hC ⟩; use (max C 1)
     refine ⟨ lt_of_lt_of_le (by norm_num) (le_max_right _ _), ?_ ⟩
-    peel hC with x hx hC; rw [abs_le'] at hC; simp [hC.1, hC.2]; linarith [le_max_left C 1]
+    peel hC with x hx hC; rw [abs_le'] at hC; simp [hC.1]; linarith [le_max_left C 1]
   intro ⟨ M, hM, hXM ⟩; use M; intro x hx; specialize hXM hx; simp_all [abs_le']; linarith [hXM.1]
 
 /-- Example 9.1.23 -/

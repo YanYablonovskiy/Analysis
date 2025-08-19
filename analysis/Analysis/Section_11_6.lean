@@ -30,14 +30,14 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
   set I := Icc a b
   have hab' : a ≤ b := by linarith
   have (ε:ℝ) (hε: 0 < ε) : upper_integral f I - lower_integral f I ≤ ((f b - f a) * (b-a)) *ε := by
-    obtain ⟨ N, hN ⟩ := exists_nat_gt (1/ε)
+    choose N hN using exists_nat_gt (1/ε)
     have hNpos : 0 < N := by rify; linarith [show 0 < 1/ε by positivity]
     set δ := (b-a)/N
     have hδpos : 0 < δ := by positivity
     have hbeq : b = a + δ*N := by simp [δ]; field_simp
     set e : ℕ ↪ BoundedInterval := {
       toFun j := Ico (a + δ*j) (a + δ*(j+1))
-      inj' j k hjk := by simp at hjk; rcases hjk with _ | _ <;> linarith
+      inj' j k hjk := by simp at hjk; obtain _ | _ := hjk <;> linarith
     }
     set P : Partition I := {
       intervals := insert (Icc b b) (Finset.map e (Finset.range N))
@@ -68,14 +68,14 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         rintro J ⟨ rfl | ⟨ k, hk, rfl ⟩, hxJ ⟩
         . simp [mem_iff] at hxJ; linarith
         simp [mem_iff, e] at hxJ hxj
-        rcases lt_trichotomy j k with hjk | rfl | hjk
+        obtain hjk | rfl | hjk := lt_trichotomy j k
         . replace hjk : δ*((j:ℝ)+1) ≤ δ*(k:ℝ) := by rw [mul_le_mul_iff_of_pos_left hδpos]; norm_cast
           linarith
         . rfl
         replace hjk : δ*((k:ℝ)+1) ≤ δ*(j:ℝ) := by rw [mul_le_mul_iff_of_pos_left hδpos]; norm_cast
         linarith
       contains J hJ := by
-        simp at hJ; rcases hJ with rfl | ⟨ j, hj, rfl ⟩ <;> simp [subset_iff, e, I]
+        simp at hJ; obtain rfl | ⟨ j, hj, rfl ⟩ := hJ <;> simp [subset_iff, e, I]
         . linarith
         apply Set.Ico_subset_Icc_self.trans (Set.Icc_subset_Icc _ _)
         . simp; positivity
@@ -95,7 +95,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         have : a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; simp at hj; linarith
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
-        apply hf _ _ (le_of_lt hx2) <;> simp [I, hδj1, this]
+        apply hf _ _ (by order) <;> simp [I, hδj1, this]
         constructor <;> linarith
     have hdown := calc
       lower_integral f I ≥ ∑ J ∈ P.intervals, (sInf (f '' (J:Set ℝ))) * |J|ₗ :=
@@ -111,9 +111,9 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         have hajb': a + δ*(j+1) ≤ b := by simp [hbeq]; gcongr; norm_cast; simp at hj; linarith
         have hδj : 0 ≤ δ*j := by positivity
         have hδj1 : 0 ≤ δ*(j+1) := by positivity
-        apply hf _ _ hx1
+        apply_rules [hf]
         . simp [I, hδj]; linarith
-        simp [I, hδj]; constructor <;> linarith
+        simp [I]; constructor <;> linarith
     calc
       _ ≤ ∑ j ∈ .range N, f (a + δ*(j+1)) * δ - ∑ j ∈ .range N, f (a + δ*j) * δ := by linarith
       _ = (f b - f a) * δ := by
@@ -122,8 +122,7 @@ theorem integ_of_monotone {a b:ℝ} {f:ℝ → ℝ} (hf: MonotoneOn f (Icc a b))
         simp only [Nat.cast_add, Nat.cast_one] at this
         convert this using 1; simp [hbeq]; ring
       _ ≤ _ := by
-        have : 0 ≤ f b - f a := by
-          simp; apply hf (by simp [I, hab']) (by simp [I, hab']); exact hab'
+        have : 0 ≤ f b - f a := by simp; apply hf <;> simp [I, hab']
         simp [mul_assoc, δ]; gcongr
         rw [div_le_iff₀' (by positivity), mul_comm, mul_assoc]
         nth_rewrite 1 [←mul_one (b-a)]

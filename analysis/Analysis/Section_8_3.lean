@@ -25,8 +25,8 @@ namespace Chapter8
 /-- Theorem 8.3.1 -/
 theorem EqualCard.power_set_false (X:Type) : ¬ EqualCard X (Set X) := by
   -- This proof is written to follow the structure of the original text.
-  by_contra!; obtain ⟨f, hf⟩ := this
-  set A := {x | x ∉ f x }; obtain ⟨ x, hx ⟩ := hf.2 A
+  by_contra!; choose f hf using this
+  set A := {x | x ∉ f x }; choose x hx using hf.2 A
   by_cases h : x ∈ A <;> have h' := h
   . simp [A] at h'; simp_all
   rw [←hx] at h'
@@ -51,12 +51,12 @@ theorem Uncountable.power_set_nat : Uncountable (Set ℕ) := by
     contrapose! this; exact this.symm
   have : ¬ Finite (Set ℕ) := by
     by_contra!
-    have : Finite ((fun x:ℕ ↦ ({x}:Set ℕ)) '' (.univ)) := Finite.Set.subset (s := .univ) (by aesop)
+    have : Finite ((fun x:ℕ ↦ ({x}:Set ℕ)) '' .univ) := Finite.Set.subset (s := .univ) (by aesop)
     replace : Finite ℕ := by
       apply Finite.of_finite_univ
       rw [←Set.finite_coe_iff]
       apply Finite.Set.finite_of_finite_image (f := fun x ↦ ({x}:Set ℕ))
-      intro x _ y _ h; aesop
+      intro _ _ _ _ _; aesop
     have hinf : ¬ Finite ℕ := by rw [not_finite_iff_infinite]; infer_instance
     contradiction
   tauto
@@ -75,15 +75,15 @@ theorem Uncountable.real : Uncountable ℝ := by
     convert Summable.tsum_union_disjoint ?_ ?_ ?_ <;> try infer_instance
     . rw [hC]
     . rw [Set.disjoint_iff_inter_eq_empty]; ext n; simp [hAB n]
-    all_goals exact hsummable _
+    all_goals apply hsummable
   have h_nonneg (A:Set ℕ) : ∑' n:A, a n ≥ 0 := by simp [a]; positivity
   have h_congr {A B: Set ℕ} (hAB: A = B) : ∑' n:A, a n = ∑' n:B, a n  := by rw [hAB]
   have : Function.Injective f := by
     intro A B hAB; by_contra!
     rw [←Set.symmDiff_nonempty] at this
-    replace this := Nat.min_spec this
+    apply Nat.min_spec at this
     set n₀ := Nat.min (symmDiff A B)
-    simp [symmDiff] at this; obtain ⟨ h1, h2 ⟩ := this
+    simp [symmDiff] at this; choose h1 h2 using this
     wlog h : n₀ ∈ A ∧ n₀ ∉ B generalizing A B
     . simp [h] at h1
       exact this hAB.symm
@@ -142,23 +142,20 @@ theorem Uncountable.real : Uncountable ℝ := by
         calc
           _ = ∑' j:ℕ, (10:ℝ)^(-1-n₀:ℝ) * (1/(10:ℝ))^j := by
             apply tsum_congr; intro j
-            rw [Real.rpow_add (by positivity),
-                Real.rpow_neg (by positivity),
-                ←Real.inv_rpow (by positivity),
-                Real.rpow_natCast]
-            congr; norm_num
+            rw [npow_add, npow_add, Real.rpow_sub, Real.rpow_neg,
+              Real.rpow_one, Real.rpow_natCast] <;> try positivity
+            simp
+            congr
           _ = (10:ℝ)^(-1-n₀:ℝ) * ∑' j:ℕ, (1/(10:ℝ))^j := tsum_mul_left
           _ = _ := by
             rw [tsum_geometric_of_lt_one (by norm_num) (by norm_num),
                 show -1 - (n₀:ℝ) = (-n₀:ℝ) + (-1:ℝ) by ring,
-                Real.rpow_add (by positivity)]
+                Real.rpow_add, Real.rpow_neg, Real.rpow_natCast] <;> try positivity
             ring
       _ = (8 / (9:ℝ)) * (10:ℝ)^(-(n₀:ℝ)) := by ring
       _ > 0 := by positivity
     simp at this
-  replace : EqualCard (Set ℕ) (Set.range f) := by
-    use (Equiv.ofInjective _ this).toFun
-    exact (Equiv.ofInjective _ this).bijective
+  replace : EqualCard (Set ℕ) (Set.range f) := ⟨(Equiv.ofInjective _ this).toFun, (Equiv.ofInjective _ this).bijective⟩
   replace := (equiv this).mp power_set_nat
   contrapose this
   rw [not_uncountable_iff] at this ⊢
@@ -171,7 +168,7 @@ example {X:Type} [Finite X] : Nat.card (Set X) = 2 ^ Nat.card X := by
 open Classical in
 /-- Exercise 8.3.2.  Some subtle type changes due to how sets are implemented in Mathlib. Also we shift the sequence `D` by one so that we can work in `Set A` rather than `Set B`. -/
 theorem Schroder_Bernstein_lemma {X: Type} {A B C: Set X} (hAB: A ⊆ B) (hBC: B ⊆ C) (f: C ↪ A) :
-  let D : ℕ → Set A := Nat.rec ((f.image ∘ ((Set.embeddingOfSubset _ _ hBC).image)) {x:B | ↑x ∉ A}) (fun _ ↦ (f.image ∘ ((Set.embeddingOfSubset _ _ hBC).image) ∘ (Set.embeddingOfSubset _ _ hAB).image))
+  let D : ℕ → Set A := Nat.rec ((f.image ∘ ((B.embeddingOfSubset _ hBC).image)) {x:B | ↑x ∉ A}) (fun _ ↦ (f.image ∘ ((B.embeddingOfSubset _ hBC).image) ∘ (A.embeddingOfSubset _ hAB).image))
   Set.univ.PairwiseDisjoint D ∧
   let g : A → B := fun x ↦ if h: x ∈ ⋃ n, D n ∧ ∃ y:B, f ⟨↑y, hBC y.property⟩ = x then h.2.choose else ⟨ ↑x, hAB x.property ⟩
   Function.Bijective g
@@ -181,10 +178,7 @@ theorem Schroder_Bernstein_lemma {X: Type} {A B C: Set X} (hAB: A ⊆ B) (hBC: B
 abbrev LeCard (X Y: Type) : Prop := ∃ f: X → Y, Function.Injective f
 
 /-- Exercise 8.3.3 -/
-theorem Schroder_Bernstein {X Y:Type}
-  (hXY : LeCard X Y)
-  (hYX : LeCard Y X) :
-  EqualCard X Y := by
+theorem Schroder_Bernstein {X Y:Type} (hXY : LeCard X Y) (hYX : LeCard Y X) : EqualCard X Y := by
   sorry
 
 abbrev LtCard (X Y: Type) : Prop := LeCard X Y ∧ ¬ EqualCard X Y
@@ -203,7 +197,7 @@ abbrev CardOrder : Preorder Type := {
     sorry
   le_trans := by
     sorry
-  lt_iff_le_not_le := by
+  lt_iff_le_not_ge := by
     sorry
 }
 

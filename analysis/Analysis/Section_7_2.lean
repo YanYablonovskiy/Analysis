@@ -35,17 +35,17 @@ structure Series where
 instance Series.instCoe : Coe (ℕ → ℝ) Series where
   coe := fun a ↦ {
     m := 0
-    seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
-    vanish := by intro n hn; simp [hn]
+    seq n := if n ≥ 0 then a n.toNat else 0
+    vanish n hn := by simp [hn]
   }
 
 @[simp]
-theorem Series.eval_coe (a : ℕ → ℝ) (n : ℕ) : (a : Series).seq n = a n := by simp
+theorem Series.eval_coe (a: ℕ → ℝ) (n: ℕ) : (a: Series).seq n = a n := by simp
 
 abbrev Series.mk' {m:ℤ} (a: { n // n ≥ m } → ℝ) : Series where
   m := m
-  seq := fun n ↦ if h : n ≥ m then a ⟨n, h⟩ else 0
-  vanish := by intro n hn; simp [hn]
+  seq n := if h : n ≥ m then a ⟨n, h⟩ else 0
+  vanish n hn := by simp [hn]
 
 theorem Series.eval_mk' {m:ℤ} (a : { n // n ≥ m } → ℝ) {n : ℤ} (h:n ≥ m) :
     (Series.mk' a).seq n = a ⟨ n, h ⟩ := by simp [h]
@@ -56,8 +56,7 @@ abbrev Series.partial (s : Series) (N:ℤ) : ℝ := ∑ n ∈ Finset.Icc s.m N, 
 theorem Series.partial_succ (s : Series) {N:ℤ} (h: N ≥ s.m-1) : s.partial (N+1) = s.partial N + s.seq (N+1) := by
   unfold Series.partial
   rw [add_comm (s.partial N) _]
-  have : N+1 ∉ Finset.Icc s.m N := by simp
-  convert Finset.sum_insert this
+  convert Finset.sum_insert (show N+1 ∉ Finset.Icc s.m N by simp)
   symm; apply Finset.insert_Icc_right_eq_Icc_add_one; linarith
 
 theorem Series.partial_of_lt {s : Series} {N:ℤ} (h: N < s.m) : s.partial N = 0 := by
@@ -148,7 +147,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
     ((mk' (fun n ↦ (-1)^(n:ℤ) * a n)).converges ↔ Filter.atTop.Tendsto a (nhds 0)) := by
   -- This proof is written to follow the structure of the original text.
   constructor
-  . intro h; replace h := decay_of_converges h
+  . intro h; apply decay_of_converges at h
     rw [tendsto_iff_dist_tendsto_zero] at h ⊢
     rw [←Filter.tendsto_comp_val_Ici_atTop (a := m)] at h
     convert h using 2 with _ n
@@ -166,9 +165,9 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
         congr; rw [←zpow_one_add₀ (by norm_num)]; congr 1; abel
       _ = _ := by ring
   have claim2 {N:ℤ} (hN: N ≥ m) (h': Odd N) : S (N+2) ≥ S N := by
-    rw [claim1 hN]; simp [h'.add_one.neg_one_zpow]; apply ha'; simp
+    simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
   have claim3 {N:ℤ} (hN: N ≥ m) (h': Even N) : S (N+2) ≤ S N := by
-    rw [claim1 hN]; simp [h'.add_one.neg_one_zpow]; apply ha'; simp
+    simp [claim1 hN, h'.add_one.neg_one_zpow]; apply ha'; simp
   have why1 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k) ≤ S N := by sorry
   have why2 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≥ S N - a ⟨ N+1, by linarith ⟩ := by sorry
   have why3 {N:ℤ} (hN: N ≥ m) (h': Even N) (k:ℕ) : S (N+2*k+1) ≤ S (N+2*k) := by sorry
@@ -179,7 +178,7 @@ theorem Series.converges_of_alternating {m:ℤ} {a: { n // n ≥ m} → ℝ} (ha
   have why5 {ε:ℝ} (hε: ε > 0) : ∃ N, ∀ n ≥ N, ∀ m ≥ N, |S n - S m| ≤ ε := by sorry
   have : CauchySeq S := by
     rw [Metric.cauchySeq_iff']
-    intro ε hε; obtain ⟨ N, hN ⟩ := why5 (half_pos hε); use N
+    intro ε hε; choose N hN using why5 (half_pos hε); use N
     intro n hn; rw [Real.dist_eq]; linarith [hN n hn N (by simp)]
   exact cauchySeq_tendsto_of_complete this
 
@@ -198,8 +197,8 @@ theorem Series.example_7_2_13c :  example_7_2_13.condConverges := by
 instance Series.inst_add : Add Series where
   add a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a.seq n + b.seq n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a.seq n + b.seq n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Series.add_coe (a b: ℕ → ℝ) : (a:Series) + (b:Series) = (fun n ↦ a n + b n) := by
@@ -217,8 +216,8 @@ theorem Series.add {s t:Series} (hs: s.converges) (ht: t.converges) :
 instance Series.inst.smul : SMul ℝ Series where
   smul c s := {
     m := s.m
-    seq := fun n ↦ if n ≥ s.m then c * s.seq n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ s.m then c * s.seq n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Series.smul_coe (a: ℕ → ℝ) (c: ℝ) : (c • a:Series) = (fun n ↦ c * a n) := by
@@ -237,8 +236,8 @@ theorem Series.smul {c:ℝ} {s:Series} (hs: s.converges) :
 instance Series.inst_sub : Sub Series where
   sub a b := {
     m := max a.m b.m
-    seq := fun (n:ℤ) ↦ if n ≥ max a.m b.m then a.seq n - b.seq n else 0
-    vanish := by intro n hn; rw [lt_iff_not_ge] at hn; simp [hn]
+    seq n := if n ≥ max a.m b.m then a.seq n - b.seq n else 0
+    vanish n hn := by rw [lt_iff_not_ge] at hn; simp [hn]
   }
 
 theorem Series.sub_coe (a b: ℕ → ℝ) : (a:Series) - (b:Series) = (fun n ↦ a n - b n) := by

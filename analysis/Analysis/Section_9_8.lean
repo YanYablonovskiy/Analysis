@@ -20,9 +20,9 @@ namespace Chapter9
 theorem MonotoneOn.iff {X: Set ℝ} (f: ℝ → ℝ) : MonotoneOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y ≥ f x := by
   constructor
   . intros; solve_by_elim [le_of_lt]
-  intro _ _ _ _ _ hxy; rcases le_iff_lt_or_eq.mp hxy with hxy | hxy
+  intro _ _ _ _ _ hxy; obtain hxy | rfl := le_iff_lt_or_eq.mp hxy
   . solve_by_elim
-  simp [hxy]
+  simp
 
 theorem StrictMono.iff {X: Set ℝ} (f: ℝ → ℝ) : StrictMonoOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y > f x := by
   constructor <;> intros <;> solve_by_elim
@@ -30,9 +30,9 @@ theorem StrictMono.iff {X: Set ℝ} (f: ℝ → ℝ) : StrictMonoOn f X  ↔ ∀
 theorem AntitoneOn.iff {X: Set ℝ} (f: ℝ → ℝ) : AntitoneOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y ≤ f x := by
   constructor
   . intros; solve_by_elim [le_of_lt]
-  intro _ _ _ _ _ hxy; rcases le_iff_lt_or_eq.mp hxy with hxy | hxy
+  intro _ _ _ _ _ hxy; obtain hxy | rfl := le_iff_lt_or_eq.mp hxy
   . solve_by_elim
-  simp [hxy]
+  simp
 
 theorem StrictAntitone.iff {X: Set ℝ} (f: ℝ → ℝ) : StrictAntiOn f X  ↔ ∀ x ∈ X, ∀ y ∈ X, y > x → f y < f x := by
   constructor <;> intros <;> solve_by_elim
@@ -80,7 +80,7 @@ example {R :ℝ} (hR: R > 0) {n:ℕ} (hn: n > 0) : ∃ g : ℝ → ℝ, ∀ x �
     intro _ hx _ _ hxy; simp_all [f]
     exact pow_lt_pow_left₀ hxy (by contrapose! hn; linarith) (by linarith)
   obtain ⟨ g, ⟨ _, _, _, _, hg⟩ ⟩ := (MonotoneOn.exist_inverse (by positivity) f hcont hmono).2
-  simp only [and_imp, f, zero_pow (by positivity)] at hg; use g
+  simp only [f, zero_pow (by positivity)] at hg; use g
 
 /-- Exercise 9.8.1 -/
 theorem IsMaxOn.of_monotone_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf: MonotoneOn f (.Icc a b)) :

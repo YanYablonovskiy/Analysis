@@ -22,7 +22,7 @@ namespace Chapter9
 theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: ContinuousOn f (.Icc a b)) {y:ℝ} (hy: y ∈ Set.Icc (f a) (f b) ∨ y ∈ Set.Icc (f a) (f b)) :
   ∃ c ∈ Set.Icc a b, f c = y := by
   -- This proof is written to follow the structure of the original text.
-  rcases hy with hy_left | hy_right
+  obtain hy_left | hy_right := hy
   . by_cases hya : y = f a
     . use a; simp [hya, le_of_lt hab]
     by_cases hyb : y = f b
@@ -64,12 +64,12 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
     replace hne : c < b := by contrapose! hne; simp at hc; linarith
     have hfc_lower : y ≤ f c := by
       have : ∃ N:ℕ, ∀ n ≥ N, (c+1/(n+1:ℝ)) < b := by
-        obtain ⟨ N, hN ⟩ := exists_nat_gt (1/(b-c))
+        choose N hN using exists_nat_gt (1/(b-c))
         use N; intro n hn
         have hpos : 0 < b-c := by linarith
         have : 1/(n+1:ℝ) < b-c := by rw [one_div_lt] <;> (try positivity); apply hN.trans; norm_cast; linarith
         linarith
-      obtain ⟨ N, hN ⟩ := this
+      choose N hN using this
       have hmem : ∀ n ≥ N, (c + 1/(n+1:ℝ)) ∈ Set.Icc a b := by
         intro n hn
         simp only [Set.mem_Icc, le_of_lt (hN n hn), and_true]
@@ -83,7 +83,7 @@ theorem intermediate_value {a b:ℝ} (hab: a < b) {f:ℝ → ℝ} (hf: Continuou
         solve_by_elim [notMem_of_csSup_lt]
       replace : ∀ n ≥ N, f (c + 1/(n+1:ℝ)) ≥ y := by
         intro n hn; specialize this n hn; contrapose! this
-        simp [E, this, le_of_lt (hN n hn)]
+        simp [E]
         have := hmem n hn
         simp_all [Set.mem_Icc]
       have hconv : Filter.atTop.Tendsto (fun n:ℕ ↦ c + 1/(n+1:ℝ)) (nhds c) := by

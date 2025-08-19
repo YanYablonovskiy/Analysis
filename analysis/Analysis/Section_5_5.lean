@@ -103,11 +103,11 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
   observe hx₀ : x₀ ∈ E
 
   set ε := ((1/(n+1):ℚ):Real)
-  have hpos : ε.IsPos := by simp [isPos_iff, ε, ←lt_of_coe]; positivity
+  have hpos : ε.IsPos := by simp [isPos_iff, ε]; positivity
   apply existsUnique_of_exists_of_unique
   . rw [bddAbove_def] at hbound; obtain ⟨ M, hbound ⟩ := hbound
-    obtain ⟨ K, _, hK ⟩ := le_mul hpos M
-    obtain ⟨ L', _, hL ⟩ := le_mul hpos (-x₀)
+    choose K _ hK using le_mul hpos M
+    choose L' _ hL using le_mul hpos (-x₀)
     set L := -(L':ℤ)
     have claim1_1 : L * ε < x₀ := by simp [L]; linarith
     have claim1_2 : L * ε ∉ upperBounds E := by
@@ -122,10 +122,10 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
       convert Real.upperBound_between (n := n) _ _ claim1_2
       . qify; rwa [←gt_iff_lt, gt_of_coe]
       simp [ε] at hK ⊢; exact upperBound_upper (by order) hbound
-    obtain ⟨ m, _, _, hm, hm' ⟩ := claim1_4; use m
-    have : (m/(n+1):ℚ) = m*ε := by simp [ε,ratCast_mul]; field_simp
+    choose m _ _ hm hm' using claim1_4; use m
+    have : (m/(n+1):ℚ) = m*ε := by simp [ε]; field_simp
     refine ⟨ by convert hm, ?_ ⟩
-    convert hm'; simp [ratCast_sub, this, sub_mul, ε]
+    convert hm'; simp [this, sub_mul, ε]
   intro _ _ ⟨ _, _ ⟩ ⟨ _, _ ⟩; solve_by_elim [upperBound_discrete_unique]
 
 lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
@@ -135,7 +135,7 @@ lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
 : ∀ n ≥ N, ∀ n' ≥ N, |a n - a n'| ≤ 1 / (N+1) := by
     intro n hn n' hn'
     rw [abs_le]
-    constructor
+    split_ands
     . specialize hm1 n; specialize hm2 n'
       have bound1 : ((a-b) n') < a n := by rw [lt_of_coe]; contrapose! hm2; solve_by_elim [upperBound_upper]
       have bound3 : 1/((n':ℚ)+1) ≤ 1/(N+1) := by gcongr
@@ -151,24 +151,24 @@ lemma Real.LUB_claim2 {E : Set Real} (N:ℕ) {a b: ℕ → ℚ}
 /-- Theorem 5.5.9 (Existence of least upper bound)-/
 theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): ∃ S, IsLUB E S := by
   -- This proof is written to follow the structure of the original text.
-  set x₀ := Set.Nonempty.some hE
-  have hx₀ : x₀ ∈ E := Set.Nonempty.some_mem hE
-  set m : ℕ → ℤ := fun n ↦ (Real.LUB_claim1 n hE hbound).exists.choose
+  set x₀ := hE.some
+  have hx₀ : x₀ ∈ E := hE.some_mem
+  set m : ℕ → ℤ := fun n ↦ (LUB_claim1 n hE hbound).exists.choose
   set a : ℕ → ℚ := fun n ↦ (m n:ℚ) / (n+1)
   set b : ℕ → ℚ := fun n ↦ 1 / (n+1)
-  have claim1 (n: ℕ) := Real.LUB_claim1 n hE hbound
-  have hb : (b:Sequence).IsCauchy := Sequence.IsCauchy.harmonic'
+  have claim1 (n: ℕ) := LUB_claim1 n hE hbound
+  have hb : (b:Sequence).IsCauchy := .harmonic'
   have hm1 (n:ℕ) : (a n:Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.1
   have hm2 (n:ℕ) : ¬ ((a - b) n: Real) ∈ upperBounds E := (claim1 n).exists.choose_spec.2
-  have claim2 (N:ℕ) := Real.LUB_claim2 N (by aesop) hm1 hm2
+  have claim2 (N:ℕ) := LUB_claim2 N (by aesop) hm1 hm2
   have claim3 : (a:Sequence).IsCauchy := (LIM_of_Cauchy claim2).1
   set S := LIM a; use S
   have claim4 : S = LIM (a - b) := by
     have : LIM b = 0 := LIM.harmonic
     simp [←LIM_sub claim3 hb, S, this]
   rw [isLUB_def, upperBound_def]
-  constructor
-  . intros; apply Real.LIM_of_ge claim3
+  split_ands
+  . intros; apply LIM_of_ge claim3
     peel hm1 with n hm1
     rw [upperBound_def] at hm1; solve_by_elim
   intro y hy
@@ -209,7 +209,7 @@ abbrev ExtendedReal.IsFinite (X : ExtendedReal) : Prop := match X with
 theorem ExtendedReal.finite_eq_coe {X: ExtendedReal} (hX: X.IsFinite) :
     X = ((X:Real):ExtendedReal) := by
   cases X <;> try simp [IsFinite] at hX
-  simp [coe_real, real_coe]
+  simp
 
 open Classical in
 /-- Definition 5.5.10 (Supremum)-/
@@ -253,7 +253,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
   have claim5 : x ≤ 2 := by rw [isLUB_def] at claim3; solve_by_elim [claim3.2]
   have claim6 : x.IsPos := by rw [isPos_iff]; linarith
   use x
-  rcases trichotomous' (x^2) 2 with h | h | h
+  obtain h | h | h := trichotomous' (x^2) 2
   . have claim11: ∃ ε, 0 < ε ∧ ε < 1 ∧ x^2 - 4*ε > 2 := by
       set ε := min (1/2) ((x^2-2)/8)
       have hx : x^2 - 2 > 0 := by linarith
@@ -261,7 +261,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
       observe hε1: ε ≤ 1/2
       observe hε2: ε ≤ (x^2-2)/8
       exact ⟨ ε, hε, (by linarith), (by linarith) ⟩
-    obtain ⟨ ε, hε1, hε2, hε3 ⟩ := claim11
+    choose ε hε1 hε2 hε3 using claim11
     have claim12: (x-ε)^2 > 2 := calc
       _ = x^2 - 2 * ε * x + ε * ε := by ring
       _ ≥ x^2 - 2 * ε * 2 + 0 * 0 := by gcongr
@@ -277,8 +277,8 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
       have hε: 0 < ε := by positivity
       have hε1: ε ≤ 1/2 := min_le_left _ _
       have hε2: ε ≤ (2 - x^2)/10 := min_le_right _ _
-      exact ⟨ ε, hε, (by linarith), (by linarith) ⟩
-    obtain ⟨ ε, hε1, hε2, hε3 ⟩ := claim7
+      refine ⟨ ε, hε, ?_, ?_ ⟩ <;> linarith
+    choose ε hε1 hε2 hε3 using claim7
     have claim8 : (x+ε)^2 < 2 := calc
       _ = x^2 + (2*x)*ε + ε*ε := by ring
       _ ≤ x^2 + (2*2)*ε + 1*ε := by gcongr
