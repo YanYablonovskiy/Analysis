@@ -42,7 +42,7 @@ example : (5:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 4 := by sorry
 example : (0.41:ℝ).CloseFn (.Icc 1.9 2.1) (fun x ↦ x^2) 4 := by sorry
 
 /-- Example 9.3.4 -/
-example: ¬ (0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 4 := by
+example: ¬(0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 4 := by
   sorry
 
 /-- Example 9.3.4 -/
@@ -50,7 +50,7 @@ example: (0.1:ℝ).CloseNear (.Icc 1 3) (fun x ↦ x^2) 4 2 := by
   sorry
 
 /-- Example 9.3.5 -/
-example: ¬ (0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 9 := by
+example: ¬(0.1:ℝ).CloseFn (.Icc 1 3) (fun x ↦ x^2) 9 := by
   sorry
 
 /-- Example 9.3.5 -/
@@ -62,23 +62,23 @@ abbrev Convergesto (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) : Prop := ∀
 
 /-- Connection with Mathlib filter convergence concepts -/
 theorem Convergesto.iff (X:Set ℝ) (f: ℝ → ℝ) (L:ℝ) (x₀:ℝ) :
-  Convergesto X f L x₀ ↔ ((nhds x₀) ⊓ .principal X).Tendsto f (nhds L) := by
-  unfold Convergesto Real.CloseNear Real.CloseFn
+  Convergesto X f L x₀ ↔ (nhdsWithin x₀ X).Tendsto f (nhds L) := by
+  unfold Convergesto Real.CloseNear Real.CloseFn nhdsWithin
   rw [LinearOrderedAddCommGroup.tendsto_nhds]
   peel with ε hε
   rw [Filter.eventually_inf_principal]
   simp [Filter.Eventually, mem_nhds_iff_exists_Ioo_subset]
   constructor
-  . intro ⟨ δ, hpos, hδ ⟩; use (x₀-δ), (x₀+δ), ⟨by linarith, by linarith⟩
-    intro _; simp; intros; solve_by_elim
-  intro ⟨ l, u, ⟨ h1, h2 ⟩, h ⟩
-  have h1' : 0 < x₀ - l := by linarith
-  have h2' : 0 < u - x₀ := by linarith
+  . intro ⟨ δ, _, _ ⟩; use x₀-δ, x₀+δ, by grind
+    intro _; simp; grind
+  intro ⟨ l, u, ⟨ _, _ ⟩, h ⟩
+  have h1 : 0 < x₀ - l := by linarith
+  have h2 : 0 < u - x₀ := by linarith
   set δ := min (x₀ - l) (u - x₀)
-  have hδ1 : δ ≤ x₀ - l := min_le_left _ _
-  have hδ2 : δ ≤ u - x₀ := min_le_right _ _
+  observe hδ1 : δ ≤ x₀ - l
+  observe hδ2 : δ ≤ u - x₀
   use δ, (by positivity); intro x hxX _ _
-  specialize h (show x ∈ .Ioo l u by simp; constructor <;> linarith)
+  specialize h (show x ∈ .Ioo l u by simp; grind)
   simpa [hxX] using h
 
 /-- Example 9.3.8 -/
@@ -111,7 +111,8 @@ theorem Convergesto.add {E:Set ℝ} {f g: ℝ → ℝ} {L M:ℝ} {x₀:ℝ} (h: 
   Convergesto E (f + g) (L + M) x₀ := by
     -- This proof is written to follow the structure of the original text.
     rw [iff_conv _ _ h] at hf hg ⊢
-    intro a ha hconv; specialize hf a ha hconv; specialize hg a ha hconv; convert hf.add hg using 1
+    intro a ha hconv; specialize hf a ha hconv; specialize hg a ha hconv
+    convert hf.add hg using 1
 
 /-- Proposition 9.3.14 (Limit laws for functions) / Exercise 9.3.2 -/
 theorem Convergesto.sub {E:Set ℝ} {f g: ℝ → ℝ} {L M:ℝ} {x₀:ℝ} (h: AdherentPt x₀ E)

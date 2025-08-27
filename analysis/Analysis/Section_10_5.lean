@@ -43,67 +43,57 @@ theorem _root_.Filter.Tendsto.of_div' {a b L:ℝ} (hab: a < b) {f g f' g': ℝ �
   have (x:ℝ) (hx: x ∈ Set.Ioc a b) : g x ≠ 0 := by
     by_contra this
     simp at hx
-    have := HasDerivWithinAt.exist_zero hx.1 (hgcon.mono ?_) (hg.mono ?_) (by rw [hga, this])
-    . choose y hy hgy using this; simp at hy
-      have : y ∈ Set.Icc a b := by simp; split_ands <;> linarith
-      specialize hgnon y this
-      rw [DifferentiableOn.eq_1] at hf hg; specialize hg y this
-      replace hg : HasDerivWithinAt g (g' y) (.Ioo a x) y:= by
-        rw [hg']; apply hg.hasDerivWithinAt.mono; intro _; simp; intros; split_ands <;> linarith
-      have hd := derivative_unique ?_ hg hgy
-      . contradiction
-      apply ClusterPt.mono _ ((Filter.principal_mono (s := .Ioo a y)).mpr  _)
-      . simp [←mem_closure_iff_clusterPt, closure_Ioo (show a ≠ y by linarith), le_of_lt hy.1]
-      intro _; simp; intros; split_ands <;> linarith
-    . intro _; simp; intro _ _; split_ands <;> linarith
-    intro _; simp; intros; split_ands <;> linarith
+    have := HasDerivWithinAt.exist_zero hx.1 (hgcon.mono ?_) (hg.mono ?_) ?_
+    choose y hy hgy using this; simp at hy
+    have : y ∈ Set.Icc a b := ?_
+    specialize hgnon y this
+    rw [DifferentiableOn.eq_1] at hf hg; specialize hg y this
+    replace hg : HasDerivWithinAt g (g' y) (.Ioo a x) y := by
+      rw [hg']; apply hg.hasDerivWithinAt.mono; grind
+    have hd := derivative_unique ?_ hg hgy
+    . contradiction
+    apply ClusterPt.mono _ ((Filter.principal_mono (s := .Ioo a y)).mpr  _)
+    . simp [←mem_closure_iff_clusterPt, closure_Ioo (show a ≠ y by linarith), le_of_lt hy.1]
+    all_goals grind
   refine ⟨ this, ?_ ⟩
-  rw [nhdsWithin.eq_1] at hderiv ⊢
-  rw [←Convergesto.iff, Convergesto.iff_conv _ _ _]
+  rw [←Convergesto.iff, Convergesto.iff_conv]
   . intro x hx hconv
     have hxy (n:ℕ) : ∃ yn ∈ Set.Ioo a (x n), (f (x n))/(g (x n)) = f' yn / (g' yn) := by
       set h : ℝ → ℝ := fun x' ↦ (f x') * (g (x n)) - (g x') * (f (x n))
       have hdiff : DifferentiableOn ℝ h (.Icc a b) := by fun_prop
       observe hcon : ContinuousOn h (.Icc a b)
       specialize hx n; simp at hx
-      replace hcon : ContinuousOn h (.Icc a (x n)) := by
-        apply hcon.mono; intro _; simp; intros; split_ands <;> linarith
-      replace hdiff : DifferentiableOn ℝ h (.Ioo a (x n)) := by
-        apply hdiff.mono; intro _; simp; intros; split_ands <;> linarith
-      have ha : h a = 0 := by simp [h, hfa, hga]
-      have hb : h (x n) = 0 := by simp [h]; ring
-      choose yn hyn hdh using HasDerivWithinAt.exist_zero hx.1 hcon hdiff (by rw [ha, hb])
+      replace hcon : ContinuousOn h (.Icc a (x n)) := hcon.mono ?_
+      replace hdiff : DifferentiableOn ℝ h (.Ioo a (x n)) := hdiff.mono ?_
+      have ha : h a = 0 := ?_
+      have hb : h (x n) = 0 := ?_
+      choose yn hyn hdh using HasDerivWithinAt.exist_zero hx.1 hcon hdiff (by grind)
       use yn, hyn
       rw [DifferentiableOn.eq_1] at hf hg
       have h1 : HasDerivWithinAt f (f' yn) (.Ioo a (x n)) yn := by
-        specialize hf yn (by simp_all; split_ands <;> linarith)
-        rw [hf']; apply hf.hasDerivWithinAt.mono; intro _; simp; intros; split_ands <;> linarith
+        rw [hf']; apply (hf _ _).hasDerivWithinAt.mono <;> grind
       have h2 : HasDerivWithinAt g (g' yn) (.Ioo a (x n)) yn := by
-        specialize hg yn (by simp_all; split_ands <;> linarith)
-        rw [hg']; apply hg.hasDerivWithinAt.mono; intro _; simp; intros; split_ands <;> linarith
-      have h3 : HasDerivWithinAt (fun x' ↦ (f x') * (g (x n))) ((f' yn)*(g (x n))) (.Ioo a (x n)) yn :=
-        h1.mul_const _
-      have h4 : HasDerivWithinAt (fun x' ↦ (g x') * (f (x n))) ((g' yn)*(f (x n))) (.Ioo a (x n)) yn :=
-        h2.mul_const _
+        rw [hg']; apply (hg _ _).hasDerivWithinAt.mono <;> grind
+      observe h3 : HasDerivWithinAt (fun x' ↦ (f x') * (g (x n))) ((f' yn)*(g (x n))) (.Ioo a (x n)) yn
+      observe h4 : HasDerivWithinAt (fun x' ↦ (g x') * (f (x n))) ((g' yn)*(f (x n))) (.Ioo a (x n)) yn
       have h5 : HasDerivWithinAt h (f' yn * g (x n) - g' yn * f (x n)) (.Ioo a (x n)) yn := by
-        simp [h]; exact HasDerivWithinAt.sub h3 h4
+        simp [h]; exact h3.sub h4
       have h6 : f' yn * g (x n) - g' yn * f (x n) = 0 := by
-        apply derivative_unique _ h5 hdh; simp at hyn
+        apply derivative_unique _ h5 hdh
         apply ClusterPt.mono _ ((Filter.principal_mono (s := .Ioo a yn)).mpr  _)
-        . simp [←mem_closure_iff_clusterPt, closure_Ioo (show a ≠ yn by linarith), le_of_lt hyn.1]
-        intro _; simp; intros; split_ands <;> linarith
-      have h7 : g (x n) ≠ 0 := this _ (by simp_all)
-      have h8 : g' (yn) ≠ 0 := hgnon _ (by simp_all; split_ands <;> linarith)
-      field_simp; rw [mul_comm]; linarith
+        . simp [←mem_closure_iff_clusterPt, closure_Ioo (show a ≠ yn by grind)]; grind
+        grind
+      have h7 : g (x n) ≠ 0 := ?_
+      have h8 : g' (yn) ≠ 0 := ?_
+      all_goals grind
     choose y hy hy' using hxy
     have hyconv : Filter.atTop.Tendsto y (nhds a) := by
-      simp at hy; apply tendsto_const_nhds.squeeze hconv _ <;> (intro n; linarith [hy n])
-    replace hy : ∀ n, y n ∈ Set.Icc a b := by
-      intro n; simp at hx hy ⊢; specialize hy n; specialize hx n; split_ands <;> linarith
-    simp_rw [hy' _]; apply hderiv.comp _; rw [←nhdsWithin.eq_1]
-    apply tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ hyconv _
-    exact Filter.Eventually.of_forall hy
-  simp [←closure_def', closure_Ioc (show a ≠ b by linarith), le_of_lt hab]
+      apply tendsto_const_nhds.squeeze hconv <;> (intro _; grind)
+    replace hy : ∀ n, y n ∈ Set.Icc a b := by grind
+    simp_rw [hy']; apply hderiv.comp
+    solve_by_elim [tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within,
+    Filter.Eventually.of_forall]
+  simp [←closure_def', closure_Ioc (show a ≠ b by grind)]; grind
 
 
 end Chapter10

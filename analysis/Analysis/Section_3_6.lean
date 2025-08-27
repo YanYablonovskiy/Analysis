@@ -19,6 +19,12 @@ Main constructions and results of this section:
 
 After this section, these notions will be deprecated in favor of their Mathlib equivalents.
 
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 namespace Chapter3
@@ -54,6 +60,10 @@ instance SetTheory.Set.EqualCard.inst_setoid : Setoid SetTheory.Set := ⟨ Equal
 /-- Definition 3.6.5 -/
 abbrev SetTheory.Set.has_card (X:Set) (n:ℕ) : Prop := X ≈ Fin n
 
+theorem SetTheory.Set.has_card_iff (X:Set) (n:ℕ) :
+    X.has_card n ↔ ∃ f: X → Fin n, Function.Bijective f := by
+  simp [has_card, HasEquiv.Equiv, Setoid.r, EqualCard]
+
 /-- Remark 3.6.6 -/
 theorem SetTheory.Set.Remark_3_6_6 (n:ℕ) :
     (nat.specify (fun x ↦ 1 ≤ (x:ℕ) ∧ (x:ℕ) ≤ n)).has_card n := by sorry
@@ -64,22 +74,16 @@ theorem SetTheory.Set.Example_3_6_7a (a:Object) : ({a}:Set).has_card 1 := by sor
 theorem SetTheory.Set.Example_3_6_7b {a b c d:Object} (hab: a ≠ b) (hac: a ≠ c) (had: a ≠ d)
   (hbc: b ≠ c) (hbd: b ≠ d) (hcd: c ≠ d) : ({a,b,c,d}:Set).has_card 4 := by sorry
 
-theorem SetTheory.Set.has_card_iff (X:Set) (n:ℕ) :
-    X.has_card n ↔ ∃ f: X → Fin n, Function.Bijective f := by
-  simp [has_card, HasEquiv.Equiv, Setoid.r, EqualCard]
-
 /-- Lemma 3.6.9 -/
 theorem SetTheory.Set.pos_card_nonempty {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n) : X ≠ ∅ := by
   -- This proof is written to follow the structure of the original text.
   by_contra! this
   have hnon : Fin n ≠ ∅ := by
-    apply nonempty_of_inhabited (x := 0)
-    rw [mem_Fin]
-    use 0, (by linarith); rfl
+    apply nonempty_of_inhabited (x := 0); rw [mem_Fin]; use 0, (by omega); rfl
   rw [has_card_iff] at hX
   choose f hf using hX
   sorry
-  -- obtain a contradiction from the fact that `f` is a bijection  from the empty set to a
+  -- obtain a contradiction from the fact that `f` is a bijection from the empty set to a
   -- non-empty set.
 
 /-- Exercise 3.6.2a -/
@@ -93,21 +97,17 @@ theorem SetTheory.Set.card_erase {n:ℕ} (h: n ≥ 1) {X:Set} (hX: X.has_card n)
   rw [has_card_iff] at hX; choose f hf using hX
   set X' : Set := X \ {x.val}
   set ι : X' → X := fun ⟨y, hy⟩ ↦ ⟨ y, by aesop ⟩
-  have hι (x:X') : (ι x:Object) = x := rfl
+  observe hι : ∀ x:X', (ι x:Object) = x
   choose m₀ hm₀ hm₀f using (mem_Fin _ _).mp (f x).property
   set g : X' → Fin (n-1) := fun x' ↦
-    if h' : f (ι x') < m₀ then
-      Fin_mk _ (f (ι x')) (by have := Fin.toNat_lt (f (ι x')); omega)
-    else
-      Fin_mk _ (f (ι x') - 1) (by
-        have := Fin.toNat_lt (f (ι x'))
-        have : (f (ι x'):ℕ) ≠ m₀ := by
-          have := x'.property
-          simp [X'] at this; contrapose! this; intros; simp [←this, Subtype.val_inj, hf.1.eq_iff, ι] at hm₀f
-          simp [hm₀f]
-        omega)
+    let := Fin.toNat_lt (f (ι x'))
+    let : (f (ι x'):ℕ) ≠ m₀ := by
+      by_contra!; simp [←this, Subtype.val_inj, hf.1.eq_iff, ι] at hm₀f
+      have := x'.property; aesop
+    if h' : f (ι x') < m₀ then Fin_mk _ (f (ι x')) (by omega)
+    else Fin_mk _ (f (ι x') - 1) (by omega)
   have hg_def (x':X') : if (f (ι x'):ℕ) < m₀ then (g x':ℕ) = f (ι x') else (g x':ℕ) = f (ι x') - 1 := by
-    by_cases h' : f (ι x') < m₀ <;> simp [g, h']
+    split_ifs with h' <;> simp [g,h']
   have hg : Function.Bijective g := by sorry
   use g
 
@@ -116,7 +116,7 @@ theorem SetTheory.Set.card_uniq {X:Set} {n m:ℕ} (h1: X.has_card n) (h2: X.has_
   -- This proof is written to follow the structure of the original text.
   revert X m; induction' n with n hn
   . intro _ _ h1 h2; rw [has_card_zero] at h1; contrapose! h1
-    exact pos_card_nonempty (by omega) h2
+    apply pos_card_nonempty _ h2; omega
   intro X m h1 h2
   have : X ≠ ∅ := pos_card_nonempty (by omega) h1
   choose x hx using nonempty_def this
@@ -127,7 +127,7 @@ example : ({0,1,2}:Set).has_card 3 := by sorry
 
 example : ({3,4}:Set).has_card 2 := by sorry
 
-example : ¬ ({0,1,2}:Set) ≈ ({3,4}:Set) := by sorry
+example : ¬({0,1,2}:Set) ≈ ({3,4}:Set) := by sorry
 
 abbrev SetTheory.Set.finite (X:Set) : Prop := ∃ n:ℕ, X.has_card n
 
@@ -154,12 +154,10 @@ theorem SetTheory.Set.has_card_card {X:Set} (hX: X.finite) : X.has_card (SetTheo
   simp [card, hX, hX.choose_spec]
 
 theorem SetTheory.Set.has_card_to_card (X:Set) (n: ℕ): X.has_card n → X.card = n := by
-  intro h; have hf : X.finite := ⟨ n, h ⟩
-  simp [card, hf, card_uniq hf.choose_spec h]
+  intro h; simp [card, card_uniq (⟨ n, h ⟩:X.finite).choose_spec h]; aesop
 
-theorem SetTheory.Set.card_to_has_card (X:Set) {n: ℕ} (hn: n ≠ 0): X.card = n → X.has_card n := by
-  rintro rfl; apply has_card_card
-  contrapose! hn; simp [card, hn]
+theorem SetTheory.Set.card_to_has_card (X:Set) {n: ℕ} (hn: n ≠ 0): X.card = n → X.has_card n
+  := by grind [has_card_card]
 
 theorem SetTheory.Set.card_fin_eq (n:ℕ): (Fin n).has_card n := (has_card_iff _ _).mp ⟨ id, Function.bijective_id ⟩
 
@@ -169,11 +167,9 @@ theorem SetTheory.Set.Fin_finite {n:ℕ}: (Fin n).finite := ⟨n, card_fin_eq n�
 
 theorem SetTheory.Set.EquivCard_to_has_card_eq {X Y:Set} (n: ℕ) (h: X ≈ Y): X.has_card n ↔ Y.has_card n := by
   choose f hf using h; let e := Equiv.ofBijective f hf
-  constructor
-  . intro hX; rw [has_card_iff] at *; choose g hg using hX
-    use e.symm.trans (.ofBijective _ hg); apply Equiv.bijective
-  . intro hY; rw [has_card_iff] at *; choose g hg using hY
-    use e.trans (.ofBijective _ hg); apply Equiv.bijective
+  constructor <;> (intro h'; rw [has_card_iff] at *; choose g hg using h')
+  . use e.symm.trans (.ofBijective _ hg); apply Equiv.bijective
+  . use e.trans (.ofBijective _ hg); apply Equiv.bijective
 
 theorem SetTheory.Set.EquivCard_to_card_eq {X Y:Set} (h: X ≈ Y): X.card = Y.card := by
   by_cases hX: X.finite <;> by_cases hY: Y.finite <;> try rw [finite] at hX hY

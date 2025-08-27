@@ -15,6 +15,13 @@ Main constructions and results of this section:
 
 Many of the results here can be established more quickly by relying more heavily on the Mathlib
 API; one can set oneself the exercise of doing so.
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 /-- Proposition 4.4.1 (Interspersing of integers by rationals) / Exercise 4.4.1 -/
@@ -65,7 +72,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   have hnon : x ≠ 0 := by aesop
   wlog hpos : x > 0
   . have hneg : -x > 0 := by simp; order
-    apply this _ _ _ hneg <;> simp [hx,hnon]
+    apply this _ _ _ hneg <;> grind
   have hrep : ∃ p q:ℕ, p > 0 ∧ q > 0 ∧ p^2 = 2*q^2 := by
     use x.num.toNat, x.den
     observe hnum_pos : x.num > 0
@@ -105,7 +112,7 @@ theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
     | succ n ih => exact (hf _ ih).2
   have hlt (n:ℕ) : a (n+1) < a n := by
     have : a (n+1) = f (a n) := n.rec_add_one p (fun n p ↦ f p)
-    simp [this, hf _ (ha n)]
+    grind
   exact Nat.no_infinite_descent ⟨ a, hlt ⟩
 
 
@@ -121,7 +128,7 @@ theorem Rat.exist_approx_sqrt_two {ε:ℚ} (hε:ε>0) : ∃ x ≥ (0:ℚ), x^2 <
     aesop
   choose n hn using Nat.exists_gt (2/ε)
   rw [gt_iff_lt, div_lt_iff₀', mul_comm, ←sq_lt_sq₀] at hn <;> try positivity
-  linarith [this n]
+  grind
 
 /-- Example 4.4.6 -/
 example :

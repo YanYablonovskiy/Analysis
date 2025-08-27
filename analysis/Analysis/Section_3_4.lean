@@ -15,6 +15,13 @@ Main constructions and results of this section:
 - Images and inverse images of (Mathlib) functions, within the framework of Section 3.1 set
   theory. (The Section 3.3 functions are now deprecated and will not be used further.)
 - Connection with Mathlib's image `f '' S` and preimage `f ⁻¹' S` notions.
+
+## Tips from past users
+
+Users of the companion who have completed the exercises in this section are welcome to send their tips for future users in this section as PRs.
+
+- (Add tip here)
+
 -/
 
 namespace Chapter3
@@ -106,7 +113,7 @@ theorem SetTheory.Set.preimage_eq {X Y:Set} (f:X → Y) (U: Set) :
   rintro ⟨x', hy, rfl⟩; simp only [_root_.Set.mem_setOf] at hy; use x'
 
 theorem SetTheory.Set.preimage_in_domain {X Y:Set} (f:X → Y) (U: Set) :
-    (preimage f U) ⊆ X := by intro x h; simp at h; tauto
+    (preimage f U) ⊆ X := by intro _ _; aesop
 
 /-- Example 3.4.6 -/
 theorem SetTheory.Set.preimage_f_3_4_2 : preimage f_3_4_2 {2,4,6} = {1,2,3} := by
