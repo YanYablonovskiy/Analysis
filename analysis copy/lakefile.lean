@@ -6,18 +6,25 @@ package «Analysis» where
   leanOptions := #[
     ⟨`pp.unicode.fun, true⟩ -- pretty-prints `fun a ↦ b`
   ]
+  -- Settings applied only to command line builds
+  moreLeanArgs := #[
+    "-Dwarn.sorry=false" -- suppress warnings about `sorry` on the command line; remove when project is complete
+  ]
   -- add any additional package configuration options here
 
 -- Require Mathlib (the comprehensive library of mathematics in Lean)
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.20.1"
--- Needed to build book
-require subverso from git
-  "https://github.com/leanprover/subverso.git" @ "main"
-require MD4Lean from git
-  "https://github.com/acmepjz/md4lean" @ "main"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.23.0-rc2"
 
+-- This library is needed to build the online version.
+-- If ../book/lakefile.lean requires verso @ "v4.X.Y", then this line should require
+-- subverso @ "verso-v4.X.Y".
+-- Right now, it's set to `main` instead to get newer improvements; next time Verso is
+-- updated in `../book/`, this should be set to the corresponding tag again.
+require subverso from git "https://github.com/leanprover/subverso" @ "main"
 
+-- This library is needed to build the online version.
+require MD4Lean from git "https://github.com/acmepjz/md4lean" @ "main"
 
 @[default_target]
 lean_lib «Analysis» where
@@ -29,15 +36,13 @@ lean_exe "literate-extract" where
 
 meta if get_config? env = some "dev" then
 require «doc-gen4» from git
-  "https://github.com/leanprover/doc-gen4" @ "main"
+  "https://github.com/leanprover/doc-gen4" @ "v4.23.0-rc2"
 
 
 module_facet literate mod : System.FilePath := do
   let ws ← getWorkspace
-  let some extract ← findLeanExe? `«literate-extract»
-    | error "The `literate-extract` executable was not found"
 
-  let exeJob ← extract.exe.fetch
+  let exeJob ← «literate-extract».fetch
   let modJob ← mod.olean.fetch
 
   let buildDir := ws.root.buildDir
