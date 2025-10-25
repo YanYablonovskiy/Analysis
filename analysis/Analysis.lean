@@ -80,14 +80,4 @@ import Analysis.Misc.SIExamples
 import Analysis.Misc.FiniteChoice
 import Analysis.Misc.Probability
 import Analysis.Misc.erdos_379
-import Analysis.Misc.erdos_707
 import Analysis.Misc.erdos_987
-
-import Analysis.MeasureTheory.Notation
-import Analysis.MeasureTheory.Section_1_1_1
-import Analysis.MeasureTheory.Section_1_1_2
-import Analysis.MeasureTheory.Section_1_1_3
-import Analysis.MeasureTheory.Section_1_2
-import Analysis.MeasureTheory.Section_1_2_1
-import Analysis.MeasureTheory.Section_1_2_2
-import Analysis.MeasureTheory.Section_1_2_3
